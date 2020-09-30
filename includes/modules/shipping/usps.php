@@ -163,29 +163,35 @@ class usps extends base
             $this->icon = $template->get_template_dir('shipping_usps.gif', DIR_WS_TEMPLATE, $current_page_base, 'images/icons') . '/shipping_usps.gif';
         }
 
-        // prepare list of countries which USPS ships to
-        $this->countries = $this->country_list();
+        // -----
+        // Some processing is admin/storefront conditional, since there's no $order element
+        // available during the admin's Modules->Shipping processing.
+        //
+        if (IS_ADMIN_FLAG === false) {
+            // prepare list of countries which USPS ships to
+            $this->countries = $this->country_list();
 
-        // use USPS translations for US shops (USPS treats certain regions as "US States" instead of as different "countries", so we translate here)
-        $this->usps_countries = $this->usps_translation();
+            // use USPS translations for US shops (USPS treats certain regions as "US States" instead of as different "countries", so we translate here)
+            $this->usps_countries = $this->usps_translation();
 
-        // certain methods don't qualify if declared value is greater than $400
-        $this->types_to_skip_over_certain_value = array(
-           'Priority Mail InternationalRM Flat Rate Envelope' => 400,
-           'Priority Mail InternationalRM Small Flat Rate Envelope' => 400,
-           'Priority Mail InternationalRM Small Flat Rate Box' => 400,
-           'Priority Mail InternationalRM Legal Flat Rate Envelope' => 400,
-           'Priority Mail InternationalRM Padded Flat Rate Envelope' => 400,
-           'Priority Mail InternationalRM Gift Card Flat Rate Envelope' => 400,
-           'Priority Mail InternationalRM Window Flat Rate Envelope' => 400,
-           'First-Class MailRM International Letter' => 400,
-           'First-Class MailRM International Large Envelope' => 400,
-           'First-Class Package International ServiceTM' => 400,
-        );
+            // certain methods don't qualify if declared value is greater than $400
+            $this->types_to_skip_over_certain_value = array(
+               'Priority Mail InternationalRM Flat Rate Envelope' => 400,
+               'Priority Mail InternationalRM Small Flat Rate Envelope' => 400,
+               'Priority Mail InternationalRM Small Flat Rate Box' => 400,
+               'Priority Mail InternationalRM Legal Flat Rate Envelope' => 400,
+               'Priority Mail InternationalRM Padded Flat Rate Envelope' => 400,
+               'Priority Mail InternationalRM Gift Card Flat Rate Envelope' => 400,
+               'Priority Mail InternationalRM Window Flat Rate Envelope' => 400,
+               'First-Class MailRM International Letter' => 400,
+               'First-Class MailRM International Large Envelope' => 400,
+               'First-Class Package International ServiceTM' => 400,
+            );
 
-        $this->getTransitTime = (in_array('Display transit time', explode(', ', MODULE_SHIPPING_USPS_OPTIONS)));
+            $this->getTransitTime = (in_array('Display transit time', explode(', ', MODULE_SHIPPING_USPS_OPTIONS)));
 
-        $this->shipping_cutoff_time = '1400'; // 1400 = 14:00 = 2pm ---- must be HHMM without punctuation
+            $this->shipping_cutoff_time = '1400'; // 1400 = 14:00 = 2pm ---- must be HHMM without punctuation
+        }
 
         $this->notify('NOTIFY_SHIPPING_USPS_CONSTRUCTOR_COMPLETED');
     }
@@ -2235,9 +2241,9 @@ class usps extends base
     protected function usps_translation() 
     {
         $this->notify('NOTIFY_SHIPPING_USPS_TRANSLATION');
-        global $order, $selected_country, $state_zone_id;
+        global $order;
         if (SHIPPING_ORIGIN_COUNTRY == '223') {
-            switch($order->delivery['country']['iso_code_2']) {
+            switch ($order->delivery['country']['iso_code_2']) {
                 case 'AS': // Samoa American
                 case 'GU': // Guam
                 case 'MP': // Northern Mariana Islands
