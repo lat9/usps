@@ -15,7 +15,9 @@
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike, 2018-03-28 - bislewl  Version K10 $
  */
-
+if (!defined('IS_ADMIN_FLAG')) {
+    exit('Illegal Access');
+}
 /**
  * USPS Shipping Module class
  *
@@ -92,7 +94,7 @@ class usps extends base
 
     public function __construct() 
     {
-        global $db, $template, $current_page_base;
+        global $db, $template, $current_page_base, $current_page;
 
         $this->code = 'usps';
         $this->title = (MODULE_SHIPPING_USPS_TITLE_SIZE == 'Short' ? MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE : MODULE_SHIPPING_USPS_TEXT_TITLE);
@@ -103,11 +105,19 @@ class usps extends base
         }
         
         $this->enabled = (MODULE_SHIPPING_USPS_STATUS == 'True');
-        if ($this->enabled && MODULE_SHIPPING_USPS_DEBUG_MODE != 'Off' && IS_ADMIN_FLAG) {
-            $this->title .=  '<span class="alert"> (Debug is ON: ' . MODULE_SHIPPING_USPS_DEBUG_MODE . ')</span>';
-        }
-        if ($this->enabled && MODULE_SHIPPING_USPS_SERVER != 'production' && IS_ADMIN_FLAG) {
-            $this->title .=  '<span class="alert"> (USPS Server set to: ' . MODULE_SHIPPING_USPS_SERVER . ')</span>';
+        
+        // -----
+        // During admin processing (Modules :: Shipping), let the admin know of some test
+        // conditions.  Limiting to that script so that the additions don't show up during
+        // Edit Orders (and possibly others).
+        //
+        if ($this->enabled && IS_ADMIN_FLAG && $current_page == 'modules.php') {
+            if (MODULE_SHIPPING_USPS_DEBUG_MODE != 'Off') {
+                $this->title .=  '<span class="alert"> (Debug is ON: ' . MODULE_SHIPPING_USPS_DEBUG_MODE . ')</span>';
+            }
+            if (MODULE_SHIPPING_USPS_SERVER != 'production') {
+                $this->title .=  '<span class="alert"> (USPS Server set to: ' . MODULE_SHIPPING_USPS_SERVER . ')</span>';
+            }
         }
 
         $this->tax_class = (int)MODULE_SHIPPING_USPS_TAX_CLASS;
