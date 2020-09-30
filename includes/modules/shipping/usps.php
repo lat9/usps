@@ -552,18 +552,16 @@ class usps extends base
             // init vars used later
             $minweight = $maxweight = $handling = 0;
 
-
             // Build a match pattern for regex compare later against selected allowed services
             $Package['lookupRegex'] = preg_quote($type) . '(?:RM|TM)?$';
-// echo 'USPS A 489 $Package[FirstClassMailType]: ' . $Package['FirstClassMailType'] . ' $type: ' . $type . ' $Package[lookupRegex]: ' . $Package['lookupRegex'] . '<br>';
-            if (in_array(strtoupper($Package['FirstClassMailType']), array('LETTER'))) {
-                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail(?:RM|TM)?(?: Stamped )?.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
-            }
-            if (in_array(strtoupper($Package['FirstClassMailType']), array('PARCEL'))) {
-                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
-            }
-            if (in_array(strtoupper($Package['FirstClassMailType']), array('FLAT') )) {
-                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . 'Envelope';
+            if (isset($Package['FirstClassMailType'])) {
+                if (strcasecmp($Package['FirstClassMailType'], 'LETTER') === 0) {
+                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail(?:RM|TM)?(?: Stamped )?.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
+                } elseif (strcasecmp($Package['FirstClassMailType'], 'PARCEL') === 0) {
+                     $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
+                } elseif (strcasecmp($Package['FirstClassMailType'], 'FLAT') === 0) {
+                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . 'Envelope';
+                }
             }
             $Package['lookupRegex'] = str_replace('Stamped Letter', 'Letter', $Package['lookupRegex']);
             $Package['lookupRegex'] = str_replace('LetterLETTER', 'Letter', $Package['lookupRegex']);
@@ -726,15 +724,6 @@ class usps extends base
 //echo 'USPS $type: ' . $type . (in_array($type, $this->typeCheckboxesSelected) ? ' YES' : ' NO') . ' $cost: ' . $cost . ' $title: ' . $title . '<br /><br />';
 //echo 'USPS $type: ' . $type . (in_array($type, $this->typeCheckboxesSelected) ? ' YES' : ' NO') . ' $method: ' . $method . ' $usps_shipping_weight: ' . $usps_shipping_weight . ' $minweight: ' . $minweight . ' $maxweight: ' . $maxweight . '<br>';
 
-            if ($cnt_dump == 0) {
-                $cnt_dump++;
-  //  echo '<pre>'; echo var_dump($uspsQuote); echo '</pre>';
-  //  echo '<pre>'; echo var_dump($Package); echo '</pre>';
-  //  echo '<pre>'; echo var_dump($Services); echo '</pre>';
-  //  echo '<pre>'; echo var_dump($this->typeCheckboxesSelected); echo '</pre>';
-  //  echo '<pre>'; echo var_dump($uspsQuote); echo '</pre>';
-            }
-
 // check First Class before validating
 //  echo '<BR>$uspsQuote[Package][$i][FirstClassMailType]: ' . ($Package['FirstClassMailType'] == '' ? 'NONE' : $Package['FirstClassMailType']) . ' $type: ' . $type . ' $maxweight: ' . $maxweight . '<br>';
 
@@ -835,15 +824,16 @@ class usps extends base
         }
 
         // Show box weight if enabled
+        $show_box_weight = '';
         if (in_array('Display weight', explode(', ', MODULE_SHIPPING_USPS_OPTIONS))) {
             switch (SHIPPING_BOX_WEIGHT_DISPLAY) {
-                case (0):
+                case '0':
                     $show_box_weight = '';
                     break;
-                case (1):
+                case '1':
                     $show_box_weight = ' (' . $shipping_num_boxes . ' ' . TEXT_SHIPPING_BOXES . ')';
                     break;
-                case (2):
+                case '2':
                     $show_box_weight = ' (' . number_format($usps_shipping_weight * $shipping_num_boxes,2) . TEXT_SHIPPING_WEIGHT . ')';
                     break;
                 default:
@@ -1152,6 +1142,16 @@ class usps extends base
     protected function _getQuote() 
     {
         global $order, $shipping_weight, $currencies, $logfilename;
+        
+        // -----
+        // If the order's tax-value isn't set (like when a quote is requested from
+        // the shipping-estimator), set that value to 0 to prevent follow-on PHP
+        // notices from this module's quote processing.
+        //
+        if (!isset($order->info['tax'])) {
+            $order->info['tax'] = 0;
+        }
+        
         $package_id = 'USPS DOMESTIC RETURNED: ' . "\n";
         
         // force GroundOnly results in USPS Retail Ground only being offered
@@ -1251,11 +1251,17 @@ class usps extends base
 
         // US Domestic destinations
         if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
-
             // build special services for domestic
             // Some Special Services cannot work with others
             $special_services_domestic = $this->special_services(); // original
 
+            // -----
+            // If the delivery postcode isn't set (like during the shipping-estimator), set it to
+            // an empty string to cause 'no quote' to be returned.
+            //
+            if (!isset($order->delivery['postcode'])) {
+                $order->delivery['postcode'] = '';
+            }
             $ZipDestination = substr(str_replace(' ', '', $order->delivery['postcode']), 0, 5);
             if ($ZipDestination == '') {
                 return -1;
@@ -1288,12 +1294,12 @@ class usps extends base
                         } elseif (($requested_type == 'First-Class Mail Large Envelope') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail') && ($shipping_weight <= 13/16)) {
                           $FirstClassMailType = 'FLAT';
                         // disable request for First-Class Package Service - RetailTM(new retail parcel designation) at > 13oz and not Retail               
-                        } elseif (($requested_type == 'First-Class Package Service - RetailTM') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail') && ($shipping_weight <= 13/16)) {            
+                        } elseif (($requested_type == 'First-Class Package Service - RetailTM') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail') && ($shipping_weight <= 13/16)) {
                            $FirstClassMailType = 'PARCEL';    
-                        // disable request for First-ClassTM Package Service(existing commercial parcel designation) at > 1 lb and not Online(commercial pricing)               
+                        // disable request for First-ClassTM Package Service(existing commercial parcel designation) at > 1 lb and not Online(commercial pricing)
                         } elseif (($requested_type == 'First-ClassTM Package Service') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Online') && ($shipping_weight <= 15/16)) {
-                         $service = 'First Class Commercial';              
-                           $FirstClassMailType = 'PACKAGE SERVICE';       
+                         $service = 'First Class Commercial';
+                           $FirstClassMailType = 'PACKAGE SERVICE';
                         } else {
                           continue;
                         }
@@ -1596,8 +1602,9 @@ class usps extends base
 // error_log($this->commInfo . ' ' . time() . ' - microtime: ' . microtime());
 
         // SUBMIT ADDITIONAL REQUESTS FOR DELIVERY TIME ESTIMATES
-        if ($this->transitTimeCalculationMode == 'OLD' && $this->getTransitTime && sizeof($transreq) ) {
-            while (list($key, $value) = each($transreq)) {
+        if ($this->transitTimeCalculationMode == 'OLD' && $this->getTransitTime && count($transreq) != 0) {
+            $transitResp = array();
+            foreach ($transreq as $key => $value) {
                 $transitResp[$key] = '';
                 if ($value != '') {
                     curl_setopt($ch, CURLOPT_POSTFIELDS, $value);
@@ -2345,103 +2352,101 @@ $specialservicesdomestic: Certified MailRM USPS TrackingTM Insurance Priority Ma
 //@@TODO
 // Return Receipt Electronic 110 (16) missing
         $serviceOptions = explode(', ', MODULE_SHIPPING_USPS_DMST_SERVICES); // domestic
+        $specialservicesdomestic = '';
         foreach ($serviceOptions as $key => $val) {
             if (strlen($serviceOptions[$key]) > 1) {
                 if ($serviceOptions[$key+1] == 'C' || $serviceOptions[$key+1] == 'S' || $serviceOptions[$key+1] == 'Y') {
-
-                    if ($serviceOptions[$key] == 'Certified MailRM') {
-                        $specialservicesdomestic .= '  <SpecialService>105</SpecialService>' . "\n"; // 0
+                    switch ($serviceOptions[$key]) {
+                        case 'Certified MailRM':
+                            $specialservicesdomestic .= '  <SpecialService>105</SpecialService>' . "\n"; // 0
+                            break;
+                        case 'Insurance':
+                            $specialservicesdomestic .= '  <SpecialService>100</SpecialService>' . "\n"; // 1
+                            break;
+                        case 'Registered MailTM':
+                            $specialservicesdomestic .= '  <SpecialService>109</SpecialService>' . "\n"; // 5 docs said 4
+                            break;
+                        case 'Collect on Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>103</SpecialService>' . "\n"; // 6
+                            break;
+                        case 'Return Receipt for Merchandise':
+                            $specialservicesdomestic .= '  <SpecialService>107</SpecialService>' . "\n"; // 7
+                            break;
+                        case 'Return Receipt':
+                            $specialservicesdomestic .= '  <SpecialService>102</SpecialService>' . "\n"; // 8
+                            break;
+                        case 'Certificate of Mailing (Form 3665)':
+                            $specialservicesdomestic .= '  <SpecialService>160</SpecialService>' . "\n"; // 10
+                            break;
+                        case 'Certificate of Mailing (Form 3817)':
+                            $specialservicesdomestic .= '  <SpecialService>104</SpecialService>' . "\n"; // 9
+                            break;
+                        case 'Priority Mail Express Insurance':
+                            $specialservicesdomestic .= '  <SpecialService>101</SpecialService>' . "\n"; // 11
+                            break;
+                        case 'Priority Mail Insurance':
+                            $specialservicesdomestic .= '  <SpecialService>125</SpecialService>' . "\n"; // 1
+                            break;
+                        case 'USPS TrackingTM Electronic':
+                            $specialservicesdomestic .= '  <SpecialService>155</SpecialService>' . "\n"; // 12 docs said 13
+                            break;
+                        case 'USPS TrackingTM':
+                            $specialservicesdomestic .= '  <SpecialService>106</SpecialService>' . "\n"; // 13
+                            break;
+                        case 'Signature ConfirmationTM Electronic':
+                            $specialservicesdomestic .= '  <SpecialService>156</SpecialService>' . "\n"; // 14 docs said 15
+                            break;
+                        case 'Signature ConfirmationTM':
+                            $specialservicesdomestic .= '  <SpecialService>108</SpecialService>' . "\n"; // 15
+                            break;
+                        case 'Adult Signature Required':
+                            $specialservicesdomestic .= '  <SpecialService>119</SpecialService>' . "\n"; // 19
+                            break;
+                        case 'Adult Signature Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>120</SpecialService>' . "\n"; // 20
+                            break;
+                        case 'Priority Mail Express 1030 AM Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>161</SpecialService>' . "\n"; // 200 (not currently working)
+                            break;
+                        // added 2015_0531
+                        case 'Certified MailRM Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>170</SpecialService>' . "\n";
+                            break;
+                        case 'Certified MailRM Adult Signature Required':
+                            $specialservicesdomestic .= '  <SpecialService>171</SpecialService>' . "\n";
+                            break;
+                        case 'Certified MailRM Adult Signature Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>172</SpecialService>' . "\n";
+                            break;
+                        case 'Signature ConfirmationTM Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>173</SpecialService>' . "\n";
+                            break;
+                        case 'Signature ConfirmationTM Electronic Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>174</SpecialService>' . "\n";
+                            break;
+                        case 'Collect on Delivery Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>175</SpecialService>' . "\n";
+                            break;
+                        case 'Registered MailTM Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>176</SpecialService>' . "\n";
+                            break;
+                        case 'Insurance Restricted Delivery':
+                            $specialservicesdomestic .= '  <SpecialService>177</SpecialService>' . "\n";
+                            break;
+                        case 'Insurance Restricted Delivery (Priority Mail Express)':
+                            $specialservicesdomestic .= '  <SpecialService>178</SpecialService>' . "\n";
+                            break;
+                        case 'Insurance Restricted Delivery (Priority Mail)':
+                            $specialservicesdomestic .= '  <SpecialService>179</SpecialService>' . "\n";
+                            break;
+                        default:
+                            break;
                     }
-                    if ($serviceOptions[$key] == 'Insurance') {
-                        $specialservicesdomestic .= '  <SpecialService>100</SpecialService>' . "\n"; // 1
-                    }
-                    if ($serviceOptions[$key] == 'Registered MailTM') {
-                        $specialservicesdomestic .= '  <SpecialService>109</SpecialService>' . "\n"; // 5 docs said 4
-                    }
-                    if ($serviceOptions[$key] == 'Collect on Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>103</SpecialService>' . "\n"; // 6
-                    }
-                    if ($serviceOptions[$key] == 'Return Receipt for Merchandise') {
-                        $specialservicesdomestic .= '  <SpecialService>107</SpecialService>' . "\n"; // 7
-                    }
-                    if ($serviceOptions[$key] == 'Return Receipt') {
-                        $specialservicesdomestic .= '  <SpecialService>102</SpecialService>' . "\n"; // 8
-                    }
-                    if ($serviceOptions[$key] == 'Certificate of Mailing (Form 3665)') {
-                        $specialservicesdomestic .= '  <SpecialService>160</SpecialService>' . "\n"; // 10
-                    }
-                    if ($serviceOptions[$key] == 'Certificate of Mailing (Form 3817)') {
-                        $specialservicesdomestic .= '  <SpecialService>104</SpecialService>' . "\n"; // 9
-                    }
-                    if ($serviceOptions[$key] == 'Priority Mail Express Insurance') {
-                        $specialservicesdomestic .= '  <SpecialService>101</SpecialService>' . "\n"; // 11
-                    }
-                    if ($serviceOptions[$key] == 'Priority Mail Insurance') {
-                        $specialservicesdomestic .= '  <SpecialService>125</SpecialService>' . "\n"; // 1
-                    }
-                    if ($serviceOptions[$key] == 'USPS TrackingTM Electronic') {
-                        $specialservicesdomestic .= '  <SpecialService>155</SpecialService>' . "\n"; // 12 docs said 13
-                    }
-                    if ($serviceOptions[$key] == 'USPS TrackingTM') {
-                        $specialservicesdomestic .= '  <SpecialService>106</SpecialService>' . "\n"; // 13
-                    }
-                    if ($serviceOptions[$key] == 'Signature ConfirmationTM Electronic') {
-                        $specialservicesdomestic .= '  <SpecialService>156</SpecialService>' . "\n"; // 14 docs said 15
-                    }
-                    if ($serviceOptions[$key] == 'Signature ConfirmationTM') {
-                        $specialservicesdomestic .= '  <SpecialService>108</SpecialService>' . "\n"; // 15
-                    }
-                    if ($serviceOptions[$key] == 'Adult Signature Required') {
-                        $specialservicesdomestic .= '  <SpecialService>119</SpecialService>' . "\n"; // 19
-                    }
-                    if ($serviceOptions[$key] == 'Adult Signature Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>120</SpecialService>' . "\n"; // 20
-                    }
-                    // NOT CURRENTLY WORKING
-                    if ($serviceOptions[$key] == 'Priority Mail Express 1030 AM Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>161</SpecialService>' . "\n"; // 200
-                    }
-                    // added 2015_0531
-                    if ($serviceOptions[$key] == 'Certified MailRM Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>170</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Certified MailRM Adult Signature Required') {
-                        $specialservicesdomestic .= '  <SpecialService>171</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Certified MailRM Adult Signature Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>172</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Signature ConfirmationTM Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>173</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Signature ConfirmationTM Electronic Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>174</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Collect on Delivery Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>175</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Registered MailTM Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>176</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Insurance Restricted Delivery') {
-                        $specialservicesdomestic .= '  <SpecialService>177</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Insurance Restricted Delivery (Priority Mail Express)') {
-                        $specialservicesdomestic .= '  <SpecialService>178</SpecialService>' . "\n";
-                    }
-                    if ($serviceOptions[$key] == 'Insurance Restricted Delivery (Priority Mail)') {
-                        $specialservicesdomestic .= '  <SpecialService>179</SpecialService>' . "\n";
-                    }
-//          $specialservicesdomestic .= $serviceOptions[$key] . "\n";
-//echo '$serviceOptions[$key]: > 1 ' . $serviceOptions[$key] . ' $serviceOptions[$key+1]: ' . $serviceOptions[$key+1] . '<br>';
                 }
             }
         }
-//echo '$specialservicesdomestic: ' . "\n\n" . $specialservicesdomestic . "\n\n" . '<br>';
-        if ($specialservicesdomestic) {
+        if ($specialservicesdomestic !== '') {
             $specialservicesdomestic = '<SpecialServices>' . $specialservicesdomestic . '</SpecialServices>';
-        } else {
-            $specialservicesdomestic = '';
         }
         return $specialservicesdomestic;
     }
@@ -2459,34 +2464,34 @@ USPS Extra Service Name ServiceID - Our Extra Service Name
  Electronic USPS Delivery Confirmation International 9 - Electronic USPS Delivery Confirmation International
 */
         $iserviceOptions = explode(', ', MODULE_SHIPPING_USPS_INTL_SERVICES);
+        $extraserviceinternational = '';
         foreach ($iserviceOptions as $key => $val) {
             if (strlen($iserviceOptions[$key]) > 1) {
                 if ($iserviceOptions[$key+1] == 'C' || $iserviceOptions[$key+1] == 'S' || $iserviceOptions[$key+1] == 'Y') {
-                    if ($iserviceOptions[$key] == 'Registered Mail') {
-                        $extraserviceinternational .= '  <ExtraService>0</ExtraService>' . "\n";
+                    switch ($iserviceOptions[$key]) {
+                        case 'Registered Mail':
+                            $extraserviceinternational .= '  <ExtraService>0</ExtraService>' . "\n";
+                            break;
+                        case 'Insurance':
+                            $extraserviceinternational .= '  <ExtraService>1</ExtraService>' . "\n";
+                            break;
+                        case 'Return Receipt':
+                            $extraserviceinternational .= '  <ExtraService>2</ExtraService>' . "\n";
+                            break;
+                        case 'Certificate of Mailing':
+                            $extraserviceinternational .= '  <ExtraService>6</ExtraService>' . "\n";
+                            break;
+                        case 'Electronic USPS Delivery Confirmation International':
+                            $extraserviceinternational .= '  <ExtraService>9</ExtraService>' . "\n";
+                            break;
+                        default:
+                            break;
                     }
-                    if ($iserviceOptions[$key] == 'Insurance') {
-                        $extraserviceinternational .= '  <ExtraService>1</ExtraService>' . "\n";
-                    }
-                    if ($iserviceOptions[$key] == 'Return Receipt') {
-                        $extraserviceinternational .= '  <ExtraService>2</ExtraService>' . "\n";
-                    }
-                    if ($iserviceOptions[$key] == 'Certificate of Mailing') {
-                        $extraserviceinternational .= '  <ExtraService>6</ExtraService>' . "\n";
-                    }
-                    if ($iserviceOptions[$key] == 'Electronic USPS Delivery Confirmation International') {
-                        $extraserviceinternational .= '  <ExtraService>9</ExtraService>' . "\n";
-                    }
-
-    //echo '$iserviceOptions[$key]: > 1 ' . $iserviceOptions[$key] . ' $iserviceOptions[$key+1]: ' . $iserviceOptions[$key+1] . '<br>';
                 }
             }
         }
-    //echo '$extraserviceinternational: ' . "\n\n" . $extraserviceinternational . "\n\n" . '<br>';
-        if ($extraserviceinternational) {
+        if ($extraserviceinternational !== '') {
             $extraserviceinternational = '<ExtraServices>' . $extraserviceinternational . '</ExtraServices>';
-        } else {
-            $extraserviceinternational = '';
         }
         return $extraserviceinternational;
     }
