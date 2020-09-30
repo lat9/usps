@@ -83,6 +83,7 @@ class usps extends base
     // Class constant to define the current module version.
     //
     const USPS_CURRENT_VERSION = '2018-03-28 K10';
+    
   /**
    * Constructor
    *
@@ -271,17 +272,17 @@ class usps extends base
         // weight must be less than 35lbs and greater than 6 ounces or it is not machinable
         switch (true) {
             // force machinable for $0.49 remove the false && from the first case
-            case (false && ($this->usps_countries == 'US' && ($this->pounds == 0 && $this->ounces <= 1))):
+            case (false && ($this->is_us_shipment && ($this->pounds == 0 && $this->ounces <= 1))):
                 // override admin choice, too light
                 $this->machinable = 'True';
                 break;
 
-            case ($this->usps_countries == 'US' && ($this->pounds == 0 && $this->ounces < 6)):
+            case ($this->is_us_shipment && ($this->pounds == 0 && $this->ounces < 6)):
                 // override admin choice, too light
                 $this->machinable = 'False';
                 break;
 
-            case ($this->usps_countries != 'US' && ($this->pounds == 0 && $this->ounces < 3.5)):
+            case (!$this->is_us_shipment && ($this->pounds == 0 && $this->ounces < 3.5)):
                 // override admin choice, too light
                 $this->machinable = 'False';
                 break;
@@ -356,7 +357,7 @@ class usps extends base
         $servicesSelectedIntl = $this->extra_service();
 
         // Domestic/US destination:
-        if ($this->usps_countries == 'US') {
+        if ($this->is_us_shipment) {
             $dExtras = array(); // We're going to populate this with a list of "friendly names" of services "checked" to "Y" in our checkboxes
             $dOptions = explode(', ', MODULE_SHIPPING_USPS_DMST_SERVICES); // domestic
 //echo 'line ' . (__LINE__) . ' USPS domestic $dOptions: ' . '<pre>'; echo var_dump($dOptions); echo '</pre>' . '<br>';
@@ -395,7 +396,7 @@ class usps extends base
             }
         }
 
-        if ($this->usps_countries == 'US') {
+        if ($this->is_us_shipment) {
             $PackageSize = count($uspsQuote['Package']);
             // if object has no legitimate children, turn it into a firstborn:
             if (isset($uspsQuote['Package']['ZipDestination']) && !isset($uspsQuote['Package'][0]['Postage'])) {
@@ -431,12 +432,12 @@ class usps extends base
             $handling = 0;
             $usps_insurance_charge = 0;
 
-            $Package = ($this->usps_countries == 'US') ? $uspsQuote['Package'][$i]['Postage'] : $uspsQuote['Package']['Service'][$i];
+            $Package = ($this->is_us_shipment) ? $uspsQuote['Package'][$i]['Postage'] : $uspsQuote['Package']['Service'][$i];
 //echo 'line ' . (__LINE__) . ' $Package checked' . '<br>';
 //echo '<pre>'; echo var_dump($Package); echo '</pre>';
 
             // Domestic first
-            if ($this->usps_countries == 'US') {
+            if ($this->is_us_shipment) {
                 if (!empty($Package['SpecialServices']['SpecialService'])) {
 //echo 'USPS DOMESTIC $Package[SpecialServices][SpecialService]:<pre>'; echo var_dump($Package['SpecialServices']['SpecialService']); echo '</pre><br>';
 
@@ -556,13 +557,13 @@ class usps extends base
             $Package['lookupRegex'] = preg_quote($type) . '(?:RM|TM)?$';
 // echo 'USPS A 489 $Package[FirstClassMailType]: ' . $Package['FirstClassMailType'] . ' $type: ' . $type . ' $Package[lookupRegex]: ' . $Package['lookupRegex'] . '<br>';
             if (in_array(strtoupper($Package['FirstClassMailType']), array('LETTER'))) {
-                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail(?:RM|TM)?(?: Stamped )?.*', preg_quote($type)) . ($this->usps_countries != 'US' ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
+                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail(?:RM|TM)?(?: Stamped )?.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
             }
             if (in_array(strtoupper($Package['FirstClassMailType']), array('PARCEL'))) {
-                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . ($this->usps_countries != 'US' ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
+                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
             }
             if (in_array(strtoupper($Package['FirstClassMailType']), array('FLAT') )) {
-                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . ($this->usps_countries != 'US' ? '(GXG|International)?.*' : '') . 'Envelope';
+                $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . 'Envelope';
             }
             $Package['lookupRegex'] = str_replace('Stamped Letter', 'Letter', $Package['lookupRegex']);
             $Package['lookupRegex'] = str_replace('LetterLETTER', 'Letter', $Package['lookupRegex']);
@@ -640,14 +641,14 @@ class usps extends base
                     preg_match('/\[([0-9]{1,3})\]/', $key1, $matches);
                     $serviceID = $matches[1];
 //echo '$type_rebuilt: ' . $type_rebuilt . ' ServiceID='. $serviceID . ' $key1: ' . $key1 . ' $matches[1]: ' . $matches[1] . ' $hiddenCost: ' . $hiddenCost . ' $val1: ' . $val1 . '<br>';
-                    $hidden_costs_breakdown .= ($this->usps_countries == 'US' ? ' SpecialServices: ' : ' ExtraServices: ') . $key1 . ' Amount: ' . number_format($val1, 2) . "\n";
+                    $hidden_costs_breakdown .= ($this->is_us_shipment ? ' SpecialServices: ' : ' ExtraServices: ') . $key1 . ' Amount: ' . number_format($val1, 2) . "\n";
                     // Test for Insurance type being returned  100=(General) Insurance, 125=Priority Mail, 101=Priority Mail Express
 
 // Domestic Insurance 100, 101, 125 International 1
                     $insurance_test_flag = false;
                     if (preg_match('#Insurance#i', $key1)) {
                         // Domestic
-                        if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->usps_countries == 'US') {
+                        if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
                             if (strstr($servicesSelectedDomestic, $serviceID)) {
                                 if (strstr($type, 'Priority Mail')) {
                                     if (strstr($type, 'Express')) {
@@ -683,7 +684,7 @@ class usps extends base
 //echo '<br>';
 
             // set module-specific handling fee
-            if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->usps_countries == 'US') {
+            if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
                 // domestic/national
                 $usps_handling_fee = MODULE_SHIPPING_USPS_HANDLING;
             } else {
@@ -707,7 +708,7 @@ class usps extends base
 
             // process customization of transit times in quotes
             if (in_array('Display transit time', explode(', ', MODULE_SHIPPING_USPS_OPTIONS))) {
-                if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->usps_countries == 'US') {
+                if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
                     if ($this->transitTimeCalculationMode != 'OLD') {
                         $this->parseDomesticTransitTimeResults($Package, $type_rebuilt);
                     }
@@ -777,7 +778,7 @@ class usps extends base
                 // USPS customize for filtering displayed methods and costs
 //echo '<br />USPS info: ' . '<br />$type: ' . $type . '<br />$type_rebuilt: ' . $type_rebuilt . '<br />$title: ' . $title . ' $cost: ' . $cost . '<br />';
 
-                if ($this->usps_countries == 'US' && MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US == 'True' && preg_match('#First\-Class#i', $type) && $cnt_first > 1) {
+                if ($this->is_us_shipment && MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US == 'True' && preg_match('#First\-Class#i', $type) && $cnt_first > 1) {
                     continue;
                 }
 
@@ -791,7 +792,7 @@ class usps extends base
                     'cost' => $cost,
                     'insurance' => $usps_insurance_charge,
                 );
-                $usps_shipping_quotes .= $title . "\n" . ' Original cost: ' . number_format($cost_original, 2) . ($hiddenCost ? ($this->usps_countries == 'US' ? ' SpecialServices: ' : ' ExtraServices: ') . number_format($hiddenCost, 2) : '') . ' Total Cost: ' . number_format($cost, 2) . ($usps_insurance_charge ? ' - $usps_insurance_charge: ' . number_format($usps_insurance_charge, 2) : '') . "\n";
+                $usps_shipping_quotes .= $title . "\n" . ' Original cost: ' . number_format($cost_original, 2) . ($hiddenCost ? ($this->is_us_shipment ? ' SpecialServices: ' : ' ExtraServices: ') . number_format($hiddenCost, 2) : '') . ' Total Cost: ' . number_format($cost, 2) . ($usps_insurance_charge ? ' - $usps_insurance_charge: ' . number_format($usps_insurance_charge, 2) : '') . "\n";
                 $usps_shipping_quotes .= $hidden_costs_breakdown . "\n";
 //echo 'setting insurance: ' . $usps_insurance_charge . '<br>';
             } else {
@@ -1199,7 +1200,7 @@ class usps extends base
             $usps_shipping_methods_domestic = '';
             $usps_shipping_methods_international = '';
             $usps_shipping_country = "\n" . '==================================' . "\n\n" . 'USPS Country - $this->countries[$order->delivery[country][iso_code_2]]: ' . $this->countries[$order->delivery['country']['iso_code_2']] . ' $this->usps_countries: ' . $this->usps_countries . "\n";
-            if ($this->usps_countries == 'US') {
+            if ($this->is_us_shipment) {
                 $package_id_sent = 0;
                 $usps_shipping_methods_domestic .= '<br />USPS DOMESTIC CHECKED: ' . MODULE_SHIPPING_USPS_RATE_TYPE . '<br />';
                 foreach ($this->typeCheckboxesSelected as $key => $val) {
@@ -1249,7 +1250,7 @@ class usps extends base
         }
 
         // US Domestic destinations
-        if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->usps_countries == 'US') {
+        if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
 
             // build special services for domestic
             // Some Special Services cannot work with others
@@ -1654,7 +1655,7 @@ class usps extends base
             $services_domestic = 'Domestic Services Selected: ' . "\n";
             $services_international = 'International Services Selected: ' . "\n";
             // Domestic/US destination:
-            if ($this->usps_countries == 'US') {
+            if ($this->is_us_shipment) {
                 $dOptions = explode(', ', MODULE_SHIPPING_USPS_DMST_SERVICES); // domestic
             //echo 'USPS $dOptions: ' . '<pre>'; echo var_dump($dOptions); echo '</pre>' . '<br>';
                 foreach ($dOptions as $key => $val) {
@@ -1677,7 +1678,7 @@ class usps extends base
                     }
                 }
             }
-            if ($this->usps_countries == 'US') {
+            if ($this->is_us_shipment) {
                 $usps_shipping_services_selected = $services_domestic;
             } else {
                 $usps_shipping_services_selected = $services_international;
@@ -1686,7 +1687,7 @@ class usps extends base
             $usps_shipping_country  = str_replace("<br />", "\n", $usps_shipping_country);
             $usps_shipping_methods_domestic = str_replace("<br />", "\n", $usps_shipping_methods_domestic);
             $usps_shipping_methods_international = str_replace("<br />", "\n", $usps_shipping_methods_international);
-            if ($this->usps_countries == 'US') {
+            if ($this->is_us_shipment) {
                 $usps_shipping_methods_selected = $usps_shipping_methods_domestic . "\n\n" . $package_id . "\n\n";
             } else {
                 $usps_shipping_methods_selected = $usps_shipping_methods_international . "\n\n";
@@ -1746,12 +1747,12 @@ class usps extends base
             $body_display = str_replace('<Description>', "\n" . '<Description>', $body_display);
 
 //echo 'USPS $this->usps_countries: ' . $this->usps_countries . '<br>';
-            if ($this->usps_countries == 'US') {
+            if ($this->is_us_shipment) {
                 $body_display = str_replace('</Postage>', "\n" . '</Postage>', $body_display);
                 $body_display = str_replace('<Location>', "\n\t\t\t" .'<Location>', $body_display);
                 $body_display = str_replace('</RateV4Response>', "\n" . '</RateV4Response>', $body_display);
             }
-            if ($this->usps_countries != 'US') {
+            if (!$this->is_us_shipment) {
                 $body_display = str_replace('<Postage>', (MODULE_SHIPPING_USPS_DEBUG_MODE == 'Logs' ? "\n" : '<br />') . '<Postage>', $body_display);
                 $body_display = str_replace('<ValueOfContents>', "\n" . '<ValueOfContents>', $body_display);
             }
@@ -2242,6 +2243,7 @@ class usps extends base
     {
         $this->notify('NOTIFY_SHIPPING_USPS_TRANSLATION');
         global $order;
+        $delivery_country = 'US';
         if (SHIPPING_ORIGIN_COUNTRY == '223') {
             switch ($order->delivery['country']['iso_code_2']) {
                 case 'AS': // Samoa American
@@ -2252,17 +2254,24 @@ class usps extends base
                 case 'VI': // Virgin Islands US
     // which is right
                 case 'FM': // Micronesia, Federated States of
-                    return 'US';
                     break;
     // stays as original country
     //        case 'FM': // Micronesia, Federated States of
                 default:
-                    return $order->delivery['country']['iso_code_2'];
+                    $delivery_country = $order->delivery['country']['iso_code_2'];
                     break;
             }
         } else {
-            return $order->delivery['country']['iso_code_2'];
+            $delivery_country = $order->delivery['country']['iso_code_2'];
         }
+        
+        // -----
+        // If the delivery country is the US, set a multi-use processing flag
+        // to simplify the remaining code.
+        //
+        $this->is_us_shipment = ($delivery_country == 'US');
+        
+        return $delivery_country;
     }
 
     // used for shipDate
