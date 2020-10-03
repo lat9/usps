@@ -239,14 +239,15 @@ class usps extends base
 
         $this->getTransitTime = (strpos(MODULE_SHIPPING_USPS_OPTIONS, 'Display transit time') !== false);
 
-        $this->shipping_cutoff_time = '1400'; // 1400 = 14:00 = 2pm ---- must be HHMM without punctuation
-        
         // -----
-        // Initialize values from the order, noting that some versions of the shipping-estimator
-        // don't populate all fields used!
+        // Save the store's shipping cut-off time, in the range '1200' to '2300', removing any non-digit
+        // characters.  If the value's empty, i.e. no digits present, reset the value to '1400' (the default).
         //
-        global $order;
-        
+        $this->shipping_cutoff_time = MODULE_SHIPPING_USPS_SHIPPING_CUTOFF; // 1400 = 14:00 = 2pm ---- must be HHMM without punctuation
+        $this->shipping_cutoff_time = preg_replace('/[^\d]/', '', $this->shipping_cutoff_time);
+        if (empty($this->shipping_cutoff_time)) {
+            $this->shipping_cutoff_time = '1400';
+        }
     }
 
     /**
@@ -2137,20 +2138,13 @@ class usps extends base
             $this->shipping_cutoff_time = 1400;
         }
         // calculate today vs tomorrow based on time
-        if (version_compare(PHP_VERSION, 5.2, '>=')) {
-            if (date('Gi') < preg_replace('/[^\d]/', '', $this->shipping_cutoff_time)) { // expects it in the form of HHMM
-                $datetime = new DateTime('today');
-            } else {
-                $datetime = new DateTime('tomorrow');
-            //         $datetime = new DateTime((date('l') == 'Friday') ? 'Monday next week' : 'tomorrow');
-            }
-            $usps_date = $datetime->format('Y-m-d');
+        if (date('Hi') < $this->shipping_cutoff_time) { // expects it in the form of HHMM
+            $datetime = new DateTime('today');
         } else {
-            // old PHP versions use just today's date:
-            $usps_date = date('Y-m-d');
+            $datetime = new DateTime('tomorrow');
+        //         $datetime = new DateTime((date('l') == 'Friday') ? 'Monday next week' : 'tomorrow');
         }
-        // echo 'USPS DATE ' . $usps_date . '<br>';
-        return $usps_date;
+        return $datetime->format('Y-m-d');
     }
 
     protected function clean_usps_marks($string) 

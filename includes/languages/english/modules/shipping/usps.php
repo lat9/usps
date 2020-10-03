@@ -39,3 +39,9 @@ define('MODULE_SHIPPING_USPS_TEXT_INTL_HIDE', 'Hide Shipping Regulations');
 // to the customer?  Choose 'True' to display the regulations or 'False' (the default) otherwise.
 //
 if (!defined('MODULE_SHIPPING_USPS_REGULATIONS')) define('MODULE_SHIPPING_USPS_REGULATIONS', 'True');      //-Either 'False' (default) or 'True'
+
+// -----
+// Identifies the shipping cut-off time for the store, in the format 'HHMM', in the range '1200' to '2300'.
+// Out-of-range values will be reset to '1400' (the default).
+//
+if (!defined('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF')) define('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF', '1400');
