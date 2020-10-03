@@ -1031,7 +1031,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Extra Services (Domestic)', 'MODULE_SHIPPING_USPS_DMST_SERVICES', 'Certified MailRM, N, USPS TrackingTM Electronic, N, USPS TrackingTM, N, Insurance, N, Priority Mail Express Insurance, N, Priority Mail Insurance, N, Adult Signature Restricted Delivery, N, Adult Signature Required, N, Registered MailTM, N, Collect on Delivery, N, Return Receipt for Merchandise, N, Return Receipt, N, Certificate of Mailing (Form 3665), N, Certificate of Mailing (Form 3817), N, Signature ConfirmationTM Electronic, N, Signature ConfirmationTM, N, Priority Mail Express 1030 AM Delivery, N, Certified MailRM Restricted Delivery, N, Certified MailRM Adult Signature Required, N, Certified MailRM Adult Signature Restricted Delivery, N, Signature ConfirmationTM Restricted Delivery, N, Signature ConfirmationTM Electronic Restricted Delivery, N, Collect on Delivery Restricted Delivery, N, Registered MailTM Restricted Delivery, N, Insurance Restricted Delivery, N, Insurance Restricted Delivery (Priority Mail Express), N, Insurance Restricted Delivery (Priority Mail), N', 'Included in postage rates.  Not shown to the customer.<br />WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices(array(\'Certified MailRM\', \'USPS TrackingTM Electronic\', \'USPS TrackingTM\', \'Insurance\', \'Priority Mail Express Insurance\', \'Priority Mail Insurance\', \'Adult Signature Restricted Delivery\', \'Adult Signature Required\', \'Registered MailTM\', \'Collect on Delivery\', \'Return Receipt for Merchandise\', \'Return Receipt\', \'Certificate of Mailing (Form 3665)\', \'Certificate of Mailing (Form 3817)\', \'Signature ConfirmationTM Electronic\', \'Signature ConfirmationTM\', \'Priority Mail Express 1030 AM Delivery\', \'Certified MailRM Restricted Delivery\', \'Certified MailRM Adult Signature Required\', \'Certified MailRM Adult Signature Restricted Delivery\', \'Signature ConfirmationTM Restricted Delivery\', \'Signature ConfirmationTM Electronic Restricted Delivery\', \'Collect on Delivery Restricted Delivery\', \'Registered MailTM Restricted Delivery\', \'Insurance Restricted Delivery\', \'Insurance Restricted Delivery (Priority Mail Express)\', \'Insurance Restricted Delivery (Priority Mail)\'), ', now())"
+                ('Extra Services (Domestic)', 'MODULE_SHIPPING_USPS_DMST_SERVICES', 'Certified MailRM, N, USPS TrackingTM Electronic, N, USPS TrackingTM, N, Insurance, N, Priority Mail Express Insurance, N, Priority Mail Insurance, N, Adult Signature Restricted Delivery, N, Adult Signature Required, N, Registered MailTM, N, Collect on Delivery, N, Return Receipt, N, Certificate of Mailing (Form 3665), N, Certificate of Mailing (Form 3817), N, Signature ConfirmationTM Electronic, N, Signature ConfirmationTM, N, Priority Mail Express 1030 AM Delivery, N, Certified MailRM Restricted Delivery, N, Certified MailRM Adult Signature Required, N, Certified MailRM Adult Signature Restricted Delivery, N, Signature ConfirmationTM Restricted Delivery, N, Signature ConfirmationTM Electronic Restricted Delivery, N, Collect on Delivery Restricted Delivery, N, Registered MailTM Restricted Delivery, N, Insurance Restricted Delivery, N, Insurance Restricted Delivery (Priority Mail Express), N, Insurance Restricted Delivery (Priority Mail), N', 'Included in postage rates.  Not shown to the customer.<br />WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices(array(\'Certified MailRM\', \'USPS TrackingTM Electronic\', \'USPS TrackingTM\', \'Insurance\', \'Priority Mail Express Insurance\', \'Priority Mail Insurance\', \'Adult Signature Restricted Delivery\', \'Adult Signature Required\', \'Registered MailTM\', \'Collect on Delivery\', \'Return Receipt\', \'Certificate of Mailing (Form 3665)\', \'Certificate of Mailing (Form 3817)\', \'Signature ConfirmationTM Electronic\', \'Signature ConfirmationTM\', \'Priority Mail Express 1030 AM Delivery\', \'Certified MailRM Restricted Delivery\', \'Certified MailRM Adult Signature Required\', \'Certified MailRM Adult Signature Restricted Delivery\', \'Signature ConfirmationTM Restricted Delivery\', \'Signature ConfirmationTM Electronic Restricted Delivery\', \'Collect on Delivery Restricted Delivery\', \'Registered MailTM Restricted Delivery\', \'Insurance Restricted Delivery\', \'Insurance Restricted Delivery (Priority Mail Express)\', \'Insurance Restricted Delivery (Priority Mail)\'), ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
@@ -1430,7 +1430,7 @@ class usps extends base
             // -----
             // 20200924 Update: USPS will be phasing out the http:// (non-secure) URL.
             //
-            // Secure APIs: https:// https://secure.shippingapis.com/ShippingAPI.dll)
+            // Secure APIs: https://secure.shippingapis.com/ShippingAPI.dll
             // Non-secure APIs: http://production.shippingapis.com
             //
             case 'production':
@@ -2178,7 +2178,7 @@ Restricted Delivery 3
   Registered without Insurance 4 - Registered without Insurance - REMOVED
   Registered with Insurance 5 - Registered MailTM
   Collect on Delivery 6 - Collect on Delivery
-  Return Receipt for Merchandise 7 - Return Receipt for Merchandise
+  Return Receipt for Merchandise 7 - Return Receipt for Merchandise - REMOVED 20201003
   Return Receipt 8 - Return Receipt
   Certificate of Mailing (Form 3817) (per individual article) 9 - Certificate of Mailing (Form 3817)
 Certificate of Mailing (for firm mailing books) 10
@@ -2203,7 +2203,6 @@ $specialservicesdomestic: Certified MailRM USPS TrackingTM Insurance Priority Ma
             'Insurance' => '100',                               // 1
             'Registered MailTM' => '109',                       // 5, docs said 4
             'Collect on Delivery' => '103',                     // 6
-            'Return Receipt for Merchandise' => '107',          // 7
             'Return Receipt' => '102',                          // 8
             'Certificate of Mailing (Form 3665)' => '160',      // 10
             'Certificate of Mailing (Form 3817)' => '104',      // 9
