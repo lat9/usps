@@ -45,3 +45,23 @@ if (!defined('MODULE_SHIPPING_USPS_REGULATIONS')) define('MODULE_SHIPPING_USPS_R
 // Out-of-range values will be reset to '1400' (the default).
 //
 if (!defined('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF')) define('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF', '1400');
+
+// -----
+// Identifies whether/not a check for the database field 'products::products_groundonly' should be made.  If any products
+// in the cart have that field set to '1', then the shipping request will indicate 'HAZMAT' contents and the
+// shipping type will be forced to USPS Ground.  Valid values are 'true' and 'false' (the default).
+//
+// NOTE: Setting this value to 'true' if that field doesn't exist in your database will result in a fatal MySQL error
+// when the quote-request is made.
+//
+if (!defined('MODULE_SHIPPING_USPS_GROUNDONLY')) define('MODULE_SHIPPING_USPS_GROUNDONLY', 'false');
+
+// -----
+// Identifies whether/not a check for the database field 'products::products_fragile' should be made.  If any products
+// in the cart have that field set to '1', then the shipping request will indicate 'Fragile' contents. Valid values 
+// are 'true' and 'false' (the default).
+//
+// NOTE: Setting this value to 'true' if that field doesn't exist in your database will result in a fatal MySQL error
+// when the quote-request is made.
+//
+if (!defined('MODULE_SHIPPING_USPS_FRAGILE')) define('MODULE_SHIPPING_USPS_FRAGILE', 'false');

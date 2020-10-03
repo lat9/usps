@@ -1114,27 +1114,22 @@ class usps extends base
         
         $package_id = 'USPS DOMESTIC RETURNED: ' . "\n";
         
-        // force GroundOnly results in USPS Retail Ground only being offered
-        // to use, you must have a field for products_groundonly in the products table
-        // then uncomment the in_cart_check for the products_groundonly
-        // when $usps_groundonly is set to true, only USPS Retail Ground will show
-        $usps_groundonly = 'false';
-//    $usps_groundonly = ($_SESSION['cart']->in_cart_check('products_groundonly','1') ? 'true' : 'false');
-        if ($usps_groundonly == 'false') {
-            // no GroundOnly products
-            $usps_groundonly = '';
-        } else {
-            // 1+ GroundOnly products force USPS Retail Ground only
-            $usps_groundonly = '<Content><ContentType>HAZMAT</ContentType></Content><GroundOnly>' . $usps_groundonly . '</GroundOnly>';
+        // -----
+        // Force GroundOnly results in USPS Retail Ground only being offered.  See the shipping-module's
+        // language file for additional information.
+        //
+        $usps_groundonly = '';
+        if (MODULE_SHIPPING_USPS_GROUNDONLY == 'true' && $_SESSION['cart']->in_cart_check('products_groundonly', '1')) {
+            $usps_groundonly = '<Content><ContentType>HAZMAT</ContentType></Content><GroundOnly>true</GroundOnly>';
         }
 
-        // Force Fragile
-        // to use, you must have a field for products_fragile in the products table
-        // then uncomment the in_cart_check for the products_fragile
-        // when $usps_fragile is set to true, Fragile Rates will be returned
-        $usps_fragile = 'false';
-//    $usps_fragile = ($_SESSION['cart']->in_cart_check('products_fragile','1') ? 'true' : 'false');
-        if ($usps_fragile == 'false') {
+        // -----
+        // Force Fragile.  If the store's indicated that some of its products are fragile, check
+        // to see if any fragile products are in the cart, setting that indication in the shipping
+        // request.  Fragile rates will be returned.
+        //
+        $usps_fragile = '';
+        if (MODULE_SHIPPING_USPS_FRAGILE == 'true' && $_SESSION['cart']->in_cart_check('products_fragile', '1')) {
             $usps_fragile = '<Content><ContentType>Fragile</ContentType></Content>';
         }
 
@@ -1291,11 +1286,12 @@ class usps extends base
                     $dimensions .
                     '<Value>' . number_format($this->insurable_value, 2, '.', '') . '</Value>' .
                     $specialservices .
-                    ($usps_groundonly != '' ? $usps_groundonly : '') .
-                     '<Machinable>' . ($this->machinable == 'True' ? 'TRUE' : 'FALSE') . '</Machinable>' .
+                    $usps_groundonly .
+                    $usps_fragile .
+                    '<Machinable>' . ($this->machinable == 'True' ? 'TRUE' : 'FALSE') . '</Machinable>' .
 //'<DropOffTime>23:59</DropOffTime>' .
-                     ($this->getTransitTime && $this->transitTimeCalculationMode == 'NEW' ? '<ShipDate>' . $ship_date . '</ShipDate>' : '') .
-                     '</Package>';
+                    ($this->getTransitTime && $this->transitTimeCalculationMode == 'NEW' ? '<ShipDate>' . $ship_date . '</ShipDate>' : '') .
+                    '</Package>';
 
                 $package_id .= 'Package ID returned: ' . $package_count . ' $requested_type: ' . $requested_type . ' $service: ' . $service . ' $Container: ' . $Container . "\n";
                 $package_count++;
