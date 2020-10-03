@@ -15,7 +15,6 @@
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike Version K10 $
  */
-
 define('MODULE_SHIPPING_USPS_TEXT_TITLE', 'United States Postal Service');
 define('MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE', 'USPS');
 define('MODULE_SHIPPING_USPS_TEXT_DESCRIPTION', 'United States Postal Service<br /><br />You will need to have registered an account with USPS at https://secure.shippingapis.com/registration/ to use this module<br /><br />USPS expects you to use pounds as weight measure for your products.');
@@ -28,3 +27,15 @@ define('MODULE_SHIPPING_USPS_TEXT_DAY', 'day');
 define('MODULE_SHIPPING_USPS_TEXT_DAYS', 'days');
 define('MODULE_SHIPPING_USPS_TEXT_WEEKS', 'weeks');
 
+define('MODULE_SHIPPING_USPS_TEXT_INTL_SHOW', 'View Shipping Regulations');
+define('MODULE_SHIPPING_USPS_TEXT_INTL_HIDE', 'Hide Shipping Regulations');
+
+// -----
+// A collection of 'soft' configuration settings.  Some of these might be considered for
+// updates to the shipping-module's database configuration in the future.
+//
+// -----
+// For international orders, should the USPS shipping regulations for the ship-to country be displayed
+// to the customer?  Choose 'True' to display the regulations or 'False' (the default) otherwise.
+//
+if (!defined('MODULE_SHIPPING_USPS_REGULATIONS')) define('MODULE_SHIPPING_USPS_REGULATIONS', 'True');      //-Either 'False' (default) or 'True'
