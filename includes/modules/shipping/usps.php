@@ -1979,7 +1979,7 @@ class usps extends base
             'LT' => 'Lithuania',
             'LU' => 'Luxembourg',
             'MO' => 'Macao',
-            'MK' => 'Macedonia, Republic of',
+            'MK' => 'North Macedonia, Republic of',
             'MG' => 'Madagascar',
             'MW' => 'Malawi',
             'MY' => 'Malaysia',

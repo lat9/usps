@@ -58,7 +58,8 @@ To install or update this code ...
     - Correct missing constant warning (MODULE_SHIPPING_USPS_REGULATIONS)
       - That 'soft' configuration setting is now available in the usps.php language file.
       - Additional, previously undefined language constants added in support of the display.
-      - 'Return Receipt for Merchandise [107]' retired and USPS will return an error if requested.
+    - 'Return Receipt for Merchandise [107]' retired and USPS will return an error if requested.
+    - Country name for country ('MK') changed from 'Macedonia, Republic of' to 'North Macedonia, Republic of'
 
 2018-03-28 by bislewl
     - Changed "USPS Retail GroundTM" -> "USPS Retail GroundRM" as it is now a registrered trademark otherwise it won't show the rates
