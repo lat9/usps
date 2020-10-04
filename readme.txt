@@ -1,4 +1,6 @@
-USPS RateV4 Intl RateV2 - 2017-09-16 Version K10
+USPS RateV4 Intl RateV2 - 2020-09-24 Version K11
+
+Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
 This module requires that you have CURL installed on your server.
 
@@ -46,20 +48,22 @@ To install or update this code ...
 8. Configure your USPS shipping module
 
 ===== CHANGE HISTORY =====
-2020-10-03 by lat9
+2020-10-04 by lat9
     - Restructuring to prevent PHP notices and warnings.
       - Re-factored to use now-current code styling.
       - Includes modifications to use stripos/strpos instead of preg_match for 'simple' string-in-string checks.
       - Use foreach() instead of deprecated each()
     - Use secure (https://secure.shippingapis.com/ShippingAPI.dll) endpoint for API requests; unsecure endpoint being retired.
     - Simplifies debug handling, 'Screen' and 'Email' no longer supported.
-      - Debug filename changed to enable sort-by-name to mimic sort-by-date on the files.
+        - Debug filename changed to enable sort-by-name to mimic sort-by-date on the files.
     - Restores the USPS icon to this shipping-method's distribution zip-file.
     - Correct missing constant warning (MODULE_SHIPPING_USPS_REGULATIONS)
-      - That 'soft' configuration setting is now available in the usps.php language file.
-      - Additional, previously undefined language constants added in support of the display.
+        - That 'soft' configuration setting is now available in the usps.php language file.
+        - Additional, previously undefined language constants added in support of the display.
     - 'Return Receipt for Merchandise [107]' retired and USPS will return an error if requested.
-    - Country name for country ('MK') changed from 'Macedonia, Republic of' to 'North Macedonia, Republic of'
+    - Country name changes:
+        - Country ('MK') changed from 'Macedonia, Republic of' to 'North Macedonia, Republic of'.
+        - Country ('SZ') changed from 'Swaziland' to 'Eswatini'.
     - Add 'soft' configuration settings, present in the module's language file (refer to that file for additional information):
       - MODULE_SHIPPING_USPS_SHIPPING_CUTOFF ... the shipping cut-off time, used to determine the delivery date.
       - MODULE_SHIPPING_USPS_GROUNDONLY ... identifies whether the database field 'products::products_groundonly' should be interrogated.

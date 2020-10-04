@@ -89,7 +89,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2018-03-28 K10';
+    const USPS_CURRENT_VERSION = '2020-09-24 K11';
     
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -107,7 +107,7 @@ class usps extends base
         global $db, $template, $current_page_base, $current_page;
 
         $this->code = 'usps';
-        $this->title = (MODULE_SHIPPING_USPS_TITLE_SIZE == 'Short' ? MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE : MODULE_SHIPPING_USPS_TEXT_TITLE);
+        $this->title = (defined('MODULE_SHIPPING_USPS_TITLE_SIZE') && MODULE_SHIPPING_USPS_TITLE_SIZE == 'Short' ? MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE : MODULE_SHIPPING_USPS_TEXT_TITLE);
         $this->description = MODULE_SHIPPING_USPS_TEXT_DESCRIPTION;
         $this->sort_order = (defined('MODULE_SHIPPING_USPS_SORT_ORDER')) ? MODULE_SHIPPING_USPS_SORT_ORDER : null;
         if ($this->sort_order === null) {
@@ -519,7 +519,7 @@ class usps extends base
 
                         $val['ServiceName'] = $this->clean_usps_marks($val['ServiceName']);
 
-                        if (!empty($dExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && strtoupper($val['AvailableOnline']) == 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail' && strtoupper($val['Available']) == 'TRUE'))) {
+                        if (!empty($dExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && !empty($val['AvailableOnline']) && strtoupper($val['AvailableOnline']) == 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail' && !empty($val['Available']) && strtoupper($val['Available']) == 'TRUE'))) {
                             $val['ServiceAdmin'] = $this->clean_usps_marks($dExtras[$val['ServiceName']]);
                             $Services[] = $val;
                         }
@@ -1579,7 +1579,21 @@ class usps extends base
             return;
         }
 
-        $message = '==================================' . "\n\n" . 'SENT TO USPS:' . "\n\n" . $request . "\n\n";
+        $message = 
+            '==================================' . "\n\n" . 
+            'SENT TO USPS:' . "\n\n" . 
+            str_replace(
+                array(
+                    '</Revision>',
+                    '</Package>',
+                ),
+                array(
+                    '</Revision>' . PHP_EOL,
+                    '</Package>' . PHP_EOL,
+                ),
+                $request
+            ) .
+            "\n\n";
 
         $message .= "\n" . 'RESPONSE FROM USPS: ' . "\n";
         $message .= "\n" . '==================================' . "\n";
@@ -1782,6 +1796,9 @@ class usps extends base
 
         $this->transittime[$service] = $time == '' ? '' : ' (' . $time . ')';
 
+        if (!isset($Package['CommitmentName'])) {
+            $Package['CommitmentName'] = 'Not Returned';
+        }
         $this->uspsDebug(' Transit Time (Domestic)' . "\nService:                    " . $service . "\nCommitmentName (from USPS): " . $Package['CommitmentName'] . "\n" . '$time (calculated):         ' . $time . "\nTranslation:               " . $this->transittime[$service] . "\n\n");
     }
 
@@ -2047,7 +2064,7 @@ class usps extends base
             'LK' => 'Sri Lanka',
             'SD' => 'Sudan',
             'SR' => 'Suriname',
-            'SZ' => 'Swaziland',
+            'SZ' => 'Eswatini',
             'SE' => 'Sweden',
             'CH' => 'Switzerland',
             'SY' => 'Syrian Arab Republic',
