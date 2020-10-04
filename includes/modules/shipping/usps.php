@@ -475,7 +475,7 @@ class usps extends base
             $chk_cart += $_SESSION['cart']->in_cart_check('master_categories_id','15');
         }
         // see below use of $chk_cart
-// eof: example to block USPS Priority MailTM Small Flat Rate Box when anything from master_categories_id 12 or 15 are in the cart
+        // eof: example to block USPS Priority MailTM Small Flat Rate Box when anything from master_categories_id 12 or 15 are in the cart
 
         for ($i = 0; $i < $PackageSize; $i++) {
             if (!empty($uspsQuote['Package'][$i]['Error'])) {
@@ -519,19 +519,19 @@ class usps extends base
 
                         $val['ServiceName'] = $this->clean_usps_marks($val['ServiceName']);
 
-                        if (isset($dExtras[$val['ServiceName']]) && zen_not_null($dExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && strtoupper($val['AvailableOnline']) == 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail' && strtoupper($val['Available']) == 'TRUE'))) {
+                        if (!empty($dExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && strtoupper($val['AvailableOnline']) == 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail' && strtoupper($val['Available']) == 'TRUE'))) {
                             $val['ServiceAdmin'] = $this->clean_usps_marks($dExtras[$val['ServiceName']]);
                             $Services[] = $val;
                         }
                     }
                 }
 
-                $cost = MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && zen_not_null($Package['CommercialRate']) ? $Package['CommercialRate'] : $Package['Rate'];
+                $cost = MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && isset($Package['CommercialRate']) ? $Package['CommercialRate'] : $Package['Rate'];
                 $type = $this->clean_usps_marks($Package['MailService']);
                 // methods shipping zone
                 $usps_shipping_methods_zone = $uspsQuote['Package'][$i]['Zone'];
             } else {
-          // International
+                // International
                 if (isset($Package['ExtraServices']['ExtraService']) && is_array($Package['ExtraServices']['ExtraService'])) {
                     // if object has no legitimate children, turn it into a firstborn:
                     if (isset($Package['ExtraServices']['ExtraService']['ServiceName']) && !isset($Package['ExtraServices']['ExtraService'][0])) {
@@ -572,7 +572,7 @@ class usps extends base
 
             // Detect which First-Class type has been quoted, since USPS doesn't consistently return the type in the name of the service
             if (!isset($Package['FirstClassMailType']) || $Package['FirstClassMailType'] == '') {
-                if (isset($uspsQuote["Package"][$i]) && isset($uspsQuote["Package"][$i]['FirstClassMailType']) && $uspsQuote["Package"][$i]['FirstClassMailType'] != '') {
+                if (isset($uspsQuote['Package'][$i]) && isset($uspsQuote['Package'][$i]['FirstClassMailType']) && $uspsQuote['Package'][$i]['FirstClassMailType'] != '') {
                     $Package['FirstClassMailType'] = $uspsQuote["Package"][$i]['FirstClassMailType']; // LETTER or FLAT or PARCEL
                 }
             }
@@ -636,8 +636,8 @@ class usps extends base
             }
             // prepare costs associated with selected additional services
             $hidden_costs_breakdown = '';
-            foreach($hiddenServices as $key => $val) {
-                foreach($hiddenServices[$key] as $key1 => $val1) {
+            foreach ($hiddenServices as $key => $val) {
+                foreach ($hiddenServices[$key] as $key1 => $val1) {
                     // add the cost to the accumulator
                     $hiddenCost += $val1;
 
