@@ -1,7 +1,7 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.3.x thru v1.6
- * USPS RateV4 Intl RateV2 - Sept 16, 2017 Version K10
+ * USPS Module for Zen Cart v1.5.4 through 1.5.7
+ * USPS RateV4 Intl RateV2 - September 24, 2020 Version K11
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -14,6 +14,7 @@
  * @copyright Portions adapted from 2012 osCbyJetta
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike Version K10 $
+ * @version $Id: usps.php 2020-09-24 lat9 Version K11 $
  */
 define('MODULE_SHIPPING_USPS_TEXT_TITLE', 'United States Postal Service');
 define('MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE', 'USPS');
