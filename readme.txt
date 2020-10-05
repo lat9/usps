@@ -62,12 +62,14 @@ To install or update this code ...
         - Additional, previously undefined language constants added in support of the display.
     - 'Return Receipt for Merchandise [107]' retired and USPS will return an error if requested.
     - Country name changes:
-        - Country ('MK') changed from 'Macedonia, Republic of' to 'North Macedonia, Republic of'.
-        - Country ('SZ') changed from 'Swaziland' to 'Eswatini'.
+            - Country ('MK') changed from 'Macedonia, Republic of' to 'North Macedonia, Republic of'.
+            - Country ('SZ') changed from 'Swaziland' to 'Eswatini'.
+            - Country ('SS') added (South Sudan); note that the country is not currently registered in the countries table.
     - Add 'soft' configuration settings, present in the module's language file (refer to that file for additional information):
-      - MODULE_SHIPPING_USPS_SHIPPING_CUTOFF ... the shipping cut-off time, used to determine the delivery date.
-      - MODULE_SHIPPING_USPS_GROUNDONLY ... identifies whether the database field 'products::products_groundonly' should be interrogated.
-      - MODULE_SHIPPING_USPS_FRAGILE ... identifies whether the database field 'products::products_fragile' should be interrogated.
+        - MODULE_SHIPPING_USPS_SHIPPING_CUTOFF ... the shipping cut-off time, used to determine the delivery date.
+        - MODULE_SHIPPING_USPS_GROUNDONLY ... identifies whether the database field 'products::products_groundonly' should be interrogated.
+        - MODULE_SHIPPING_USPS_FRAGILE ... identifies whether the database field 'products::products_fragile' should be interrogated.
+    - Remove 'plugin_check_for_updates' function.  It's now expected to be present as part of the base Zen Cart distribution (zc152+).
 
 2018-03-28 by bislewl
     - Changed "USPS Retail GroundTM" -> "USPS Retail GroundRM" as it is now a registrered trademark otherwise it won't show the rates
