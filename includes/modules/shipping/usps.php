@@ -1,7 +1,7 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.3.x thru v1.6
- * USPS RateV4 Intl RateV2 - March 28, 2018 Version K10
+ * USPS Module for Zen Cart v1.5.4 through 1.5.7
+ * USPS RateV4 Intl RateV2 - September 24, 2020 Version K11
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -14,6 +14,7 @@
  * @copyright Portions adapted from 2012 osCbyJetta
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike, 2018-03-28 - bislewl  Version K10 $
+ * @version $Id: usps.php 2020-09-24 lat9 Version K11 $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -2060,6 +2061,7 @@ class usps extends base
             'ZA' => 'South Africa',
             'GS' => 'South Georgia (Falkland Islands)',
             'KR' => 'South Korea (Korea, Republic of)',
+            'SS' => 'South Sudan',      //-Note, as of zc157a this country is not included in the standard countries' list.
             'ES' => 'Spain',
             'LK' => 'Sri Lanka',
             'SD' => 'Sudan',
