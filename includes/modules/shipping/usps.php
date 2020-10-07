@@ -867,7 +867,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('USPS Version Date', 'MODULE_SHIPPING_USPS_VERSION', '2017-09-16', 'You have installed:', 6, 0, 'zen_cfg_select_option(array(\'2017-09-16\'), ', now())"
+                ('USPS Version Date', 'MODULE_SHIPPING_USPS_VERSION', '2020-09-24', 'You have installed:', 6, 0, 'zen_cfg_select_option(array(\'2020-09-24\'), ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
