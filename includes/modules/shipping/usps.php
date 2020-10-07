@@ -365,7 +365,6 @@ class usps extends base
         $this->notify('NOTIFY_SHIPPING_USPS_AFTER_GETQUOTE', array(), $order, $usps_shipping_weight, $shipping_num_boxes);
         $uspsQuote = $this->uspsQuote;
 
-
         // were errors encountered?
         if ($uspsQuote === -1) {
             $this->quotes = array(
@@ -574,7 +573,7 @@ class usps extends base
             // Detect which First-Class type has been quoted, since USPS doesn't consistently return the type in the name of the service
             if (!isset($Package['FirstClassMailType']) || $Package['FirstClassMailType'] == '') {
                 if (isset($uspsQuote['Package'][$i]) && isset($uspsQuote['Package'][$i]['FirstClassMailType']) && $uspsQuote['Package'][$i]['FirstClassMailType'] != '') {
-                    $Package['FirstClassMailType'] = $uspsQuote["Package"][$i]['FirstClassMailType']; // LETTER or FLAT or PARCEL
+                    $Package['FirstClassMailType'] = $uspsQuote['Package'][$i]['FirstClassMailType']; // LETTER or FLAT or PARCEL
                 }
             }
 
@@ -722,24 +721,23 @@ class usps extends base
 
             // build USPS output for valid methods based on selected and weight limits
             if ($usps_shipping_weight <= $maxweight && $usps_shipping_weight > $minweight) {
-                $found = false;
+                $found = true;
                 if ($method != $type && $method != $type_rebuilt) {
                     if ($method != '') {
                         continue;
                     }
+                    $found = false;
                     foreach ($this->typeCheckboxesSelected as $key => $val) {
                         if (is_numeric($val) || $val == '') {
                             continue;
                         }
                         if ($val == $type || preg_match('#' . $Package['lookupRegex'] . '#i', $val) ) {
                             $found = true;
-                        }
-                        if ($found === true) {
                             break;
                         }
                     }
                 }
-                if ($found === false) {
+                if (!$found) {
                     continue;
                 }
 
@@ -765,7 +763,6 @@ class usps extends base
                 );
                 $usps_shipping_quotes .= $title . "\n" . ' Original cost: ' . number_format($cost_original, 2) . ($hiddenCost ? ($this->is_us_shipment ? ' SpecialServices: ' : ' ExtraServices: ') . number_format($hiddenCost, 2) : '') . ' Total Cost: ' . number_format($cost, 2) . ($usps_insurance_charge ? ' - $usps_insurance_charge: ' . number_format($usps_insurance_charge, 2) : '') . "\n";
                 $usps_shipping_quotes .= $hidden_costs_breakdown . "\n";
-            } else {
             }
         }  // end for $i to $PackageSize
 
