@@ -6,7 +6,7 @@ USPS interface API documentation: https://www.usps.com/business/web-tools-apis/d
 
 Zen Cart download link: https://www.zen-cart.com/downloads.php?do=file&id=1292
 
-Zen Cart support-thread link: TBD
+Zen Cart support-thread link: https://www.zen-cart.com/showthread.php?227284-USPS-Shipping-Module-Support-Thread
 
 --------------------
 
