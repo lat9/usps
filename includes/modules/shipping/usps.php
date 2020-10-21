@@ -176,15 +176,6 @@ class usps extends base
             $this->title .=  '<span class="alert"> (USPS Server set to: ' . MODULE_SHIPPING_USPS_SERVER . ')</span>';
         }
         
-        $chk_sql = $db->Execute(
-            "SELECT * 
-               FROM " . TABLE_CONFIGURATION . " 
-              WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%' ");
-        if (MODULE_SHIPPING_USPS_VERSION != self::USPS_CURRENT_VERSION || count($this->keys()) != $chk_sql->RecordCount()) {
-            $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
-            $this->enabled = false;
-        }
-        
         $new_version_details = plugin_version_check_for_updates(self::USPS_ZEN_CART_PLUGIN_ID, self::USPS_CURRENT_VERSION);
         if ($new_version_details !== false) {
             $this->title .= '<span class="alert">' . ' - NOTE: A NEW VERSION OF THIS PLUGIN IS AVAILABLE. <a href="' . $new_version_details['link'] . '" target="_blank">[Details]</a>' . '</span>';
@@ -196,19 +187,15 @@ class usps extends base
         // is disabled so that the amber warning symbol appears in the admin shipping-modules' listing.
         //
         if ($this->enabled) {
-            $usps_shipping_methods_cnt = 0;
-            foreach ($this->typeCheckboxesSelected as $requested_type) {
-                if (is_numeric($requested_type)) {
-                    continue;
-                }
-                $usps_shipping_methods_cnt++;
-            }
-            if ($usps_shipping_methods_cnt == 0) {
-                $this->title .= '<span class="alert">' . ' - Nothing has been selected for Quotes.' . '</span>';
-            }
-
-            if (SHIPPING_ORIGIN_COUNTRY != '223') {
-                $this->title .= '<span class="alert">' . ' - USPS can only ship from USA, but your store is configured with another origin! See Admin->Configuration->Shipping/Packaging.' . '</span>';
+            $this->checkConfiguration();
+        
+            $chk_sql = $db->Execute(
+                "SELECT * 
+                   FROM " . TABLE_CONFIGURATION . " 
+                  WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%' ");
+            if (MODULE_SHIPPING_USPS_VERSION != self::USPS_CURRENT_VERSION || count($this->keys()) != $chk_sql->RecordCount()) {
+                $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
+                $this->enabled = false;
             }
         }
     }
@@ -218,6 +205,14 @@ class usps extends base
     //
     protected function storefrontInitialization()
     {
+        // -----
+        // Quick return if the shipping-module's configuration will not allow it to
+        // gather valid USPS quotes.  The shipping-module is disabled if this is the case.
+        //
+        if ($this->checkConfiguration() === false) {
+            return;
+        }
+        
         // prepare list of countries which USPS ships to
         $this->countries = $this->country_list();
 
@@ -251,6 +246,36 @@ class usps extends base
         }
     }
 
+    // -----
+    // Common storefront/admin configuration checking.  Called from adminInitializationChecks
+    // and storefrontInitialization.  Will auto-disable the shipping method if either no services
+    // have been selected or the country-of-origin is not the US.
+    //
+    protected function checkConfiguration()
+    {
+        $usps_shipping_methods_cnt = 0;
+        foreach ($this->typeCheckboxesSelected as $requested_type) {
+            if (is_numeric($requested_type)) {
+                continue;
+            }
+            $usps_shipping_methods_cnt++;
+        }
+        if ($usps_shipping_methods_cnt == 0) {
+            $this->enabled = false;
+            if (IS_ADMIN_FLAG === true) {
+                $this->title .= '<span class="alert">' . ' - Nothing has been selected for Quotes.' . '</span>';
+            }
+        }
+
+        if (SHIPPING_ORIGIN_COUNTRY != '223') {
+            $this->enabled = false;
+            if (IS_ADMIN_FLAG === true) {
+                $this->title .= '<span class="alert">' . ' - USPS can only ship from USA, but your store is configured with another origin! See Admin->Configuration->Shipping/Packaging.' . '</span>';
+            }
+        }
+        return $this->enabled;
+    }
+    
     /**
       * check whether this module should be enabled or disabled based on zone assignments and any other rules
     */
@@ -864,7 +889,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('USPS Version Date', 'MODULE_SHIPPING_USPS_VERSION', '2020-09-24', 'You have installed:', 6, 0, 'zen_cfg_select_option(array(\'2020-09-24\'), ', now())"
+                ('USPS Version Date', 'MODULE_SHIPPING_USPS_VERSION', '" . self::USPS_CURRENT_VERSION . "', 'You have installed:', 6, 0, 'zen_cfg_select_option(array(\'" . self::USPS_CURRENT_VERSION . "\'), ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 

@@ -48,7 +48,7 @@ To install or update this code ...
 8. Configure your USPS shipping module
 
 ===== CHANGE HISTORY =====
-2020-10-04 by lat9
+2020-10-21 by lat9
     - Restructuring to prevent PHP notices and warnings.
       - Re-factored to use now-current code styling.
       - Includes modifications to use stripos/strpos instead of preg_match for 'simple' string-in-string checks.
@@ -70,6 +70,7 @@ To install or update this code ...
         - MODULE_SHIPPING_USPS_GROUNDONLY ... identifies whether the database field 'products::products_groundonly' should be interrogated.
         - MODULE_SHIPPING_USPS_FRAGILE ... identifies whether the database field 'products::products_fragile' should be interrogated.
     - Remove 'plugin_check_for_updates' function.  It's now expected to be present as part of the base Zen Cart distribution (zc152+).
+    - Auto-disable on the storefront if no shipping services have been selected or if the store's country-of-origin isn't the US (country code 223).
 
 2018-03-28 by bislewl
     - Changed "USPS Retail GroundTM" -> "USPS Retail GroundRM" as it is now a registrered trademark otherwise it won't show the rates
