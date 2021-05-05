@@ -776,13 +776,24 @@ class usps extends base
                     continue;
                 }
 
-                // ADDITIONAL CUSTOMIZED CONDITIONS CAN GO HERE TO MANAGE $type_rebuilt or $title on $methods
-// switch comment marks to show $hiddenCost: from quote title
-//$show_hiddenCost =  ' $hiddenCost: ' . $hiddenCost;
-                $show_hiddenCost = '';
+                // -----
+                // Give an observer the opportunity to disallow this shipping method or to modify the method's title/cost/insurance cost.
+                //
+                $allow_type = true;
+                $saved_title = $title;
+                $saved_cost = $cost;
+                $saved_insurance_cost = $usps_insurance_charge;
+                $this->notify('NOTIFY_USPS_UPDATE_OR_DISALLOW_TYPE', $type_rebuilt, $allow_type, $title, $cost, $usps_insurance_charge);
+                if ($allow_type === false) {
+                    $this->uspsDebug("Shipping method '$type_rebuilt' disallowed by observer.");
+                    continue;
+                }
+                if ($saved_title != $title || $saved_cost != $cost || $saved_insurance_cost != $usps_insurance_charge) {
+                    $this->uspsDebug("Shipping method '$type_rebuilt', parameters changed by observer:\n\tTitle: $saved_title vs. $title.\n\tCost: $saved_cost vs. $cost.\n\tInsurance: $saved_insurance_cost vs. $usps_insurange_charge.");
+                }
                 $methods[] = array(
                     'id' => $type_rebuilt,
-                    'title' => $title . $show_hiddenCost,
+                    'title' => $title,
                     'cost' => $cost,
                     'insurance' => $usps_insurance_charge,
                 );

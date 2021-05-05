@@ -10,4 +10,8 @@ Zen Cart support-thread link: https://www.zen-cart.com/showthread.php?227284-USP
 
 --------------------
 
-## Current Version: 2020-09-24 K11
+## Current Version: 2021-05-05 K11a
+
+Starting with version 2021-05-05 K11a, there is not a notification raised by the USPS shipping module to enable site-specific customizations.  A site now has additional control over whether or not a configured shipping method is enabled as well as control of the title, pricing and insurance (if enabled) cost displayed to the customer.
+
+Refer to the in-module comments present in `/extras/includes/classes/observers/auto.usps_overrides.php` for additional information.  To use this module, you'll make your modifications and then copy that file to your site's `/includes/classes/observers/auto.usps_overrides.php`.  The module, as shipped, implements the customization provided by @Ajeh in [this](https://www.zen-cart.com/showthread.php?212699-Media-Mail-restriction-mod-to-new-3-7-14-usps-module-any-help&p=1241681) Zen Cart posting.

@@ -48,7 +48,9 @@ To install or update this code ...
 8. Configure your USPS shipping module
 
 ===== CHANGE HISTORY =====
-2020-10-21 by lat9
+2021-05-05 by lat9 2021-05-05 Version K11a
+    - Adding notification to enable store-specific customizations for methods/prices offered (see https://github.com/lat9/usps for additional documentation).
+2020-10-21 by lat9 2020-09-24 Version K11
     - Restructuring to prevent PHP notices and warnings.
       - Re-factored to use now-current code styling.
       - Includes modifications to use stripos/strpos instead of preg_match for 'simple' string-in-string checks.
