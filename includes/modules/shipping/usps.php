@@ -1,7 +1,7 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.5.4 through 1.5.7
- * USPS RateV4 Intl RateV2 - September 24, 2020 Version K11
+ * USPS Module for Zen Cart v1.5.4 through 1.5.7c
+ * USPS RateV4 Intl RateV2 - May 05, 2021 Version K11a
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -15,6 +15,7 @@
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike, 2018-03-28 - bislewl  Version K10 $
  * @version $Id: usps.php 2020-09-24 lat9 Version K11 $
+ * @version $Id: usps.php 2021-05-05 lat9 Version K11a $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -90,7 +91,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2020-09-24 K11';
+    const USPS_CURRENT_VERSION = '2021-05-05 K11a';
     
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -1008,16 +1009,17 @@ class usps extends base
 
         /*
         Small Flat Rate Box 8-5/8" x 5-3/8" x 1-5/8"
-        Global Express Guaranteed - Min. length 9-1/2", height 5-1/2"
         MODULE_SHIPPING_USPS_LENGTH 8.625
         MODULE_SHIPPING_USPS_WIDTH  5.375
         MODULE_SHIPPING_USPS_HEIGHT 1.625
+        
+        2021-05-05 K11a, now using the same defaults for international
         */
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
              VALUES 
-                ('USPS Domestic minimum Length', 'MODULE_SHIPPING_USPS_LENGTH', '8.625', 'The Minimum Length, Width and Height are used to determine shipping methods available for International Shipping.<br />While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br />In most cases, these Minimums should never have to be changed.<br /><br /><strong>Enter the Domestic</strong><br />Minimum Length - default 8.625', 6, 0, now())"
+                ('USPS Domestic minimum Length', 'MODULE_SHIPPING_USPS_LENGTH', '8.625', 'The Minimum Length, Width and Height are used to determine shipping methods available for Domestic Shipping.<br>While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br>In most cases, these Minimums should never have to be changed.<br><br><strong>Enter the Domestic</strong><br />Minimum Length - default 8.625', 6, 0, now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
@@ -1035,19 +1037,19 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
              VALUES 
-                ('USPS International minimum Length', 'MODULE_SHIPPING_USPS_LENGTH_INTL', '9.50', 'The Minimum Length, Width and Height are used to determine shipping methods available for International Shipping.<br />While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br />In most cases, these Minimums should never have to be changed.<br /><br /><strong>Enter the International</strong><br />Minimum Length - default 9.50', 6, 0, now())"
+                ('USPS International minimum Length', 'MODULE_SHIPPING_USPS_LENGTH_INTL', '8.625', 'The Minimum Length, Width and Height are used to determine shipping methods available for International Shipping.<br>While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br>In most cases, these Minimums should never have to be changed.<br><br><strong>Enter the International</strong><br>Minimum Length - default 8.625', 6, 0, now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
              VALUES 
-                ('USPS minimum Width', 'MODULE_SHIPPING_USPS_WIDTH_INTL', '1.0', 'Enter the Minimum Width - default 1.0', 6, 0, now())"
+                ('USPS minimum Width', 'MODULE_SHIPPING_USPS_WIDTH_INTL', '5.375', 'Enter the Minimum Width - default 5.375', 6, 0, now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
              VALUES 
-                ('USPS minimum Height', 'MODULE_SHIPPING_USPS_HEIGHT_INTL', '5.50', 'Enter the Minimum Height - default 5.50', 6, 0, now())"
+                ('USPS minimum Height', 'MODULE_SHIPPING_USPS_HEIGHT_INTL', '1.625', 'Enter the Minimum Height - default 1.625', 6, 0, now())"
         );
 
         $db->Execute(

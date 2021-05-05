@@ -50,6 +50,7 @@ To install or update this code ...
 ===== CHANGE HISTORY =====
 2021-05-05 by lat9 2021-05-05 Version K11a
     - Adding notification to enable store-specific customizations for methods/prices offered (see https://github.com/lat9/usps for additional documentation).
+    - Modify default international shipping 'base' dimensions to enable the offering of the International Small Flat-Rate Box method.
 2020-10-21 by lat9 2020-09-24 Version K11
     - Restructuring to prevent PHP notices and warnings.
       - Re-factored to use now-current code styling.
