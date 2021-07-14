@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2020-09-24 Version K11
+USPS RateV4 Intl RateV2 - 2021-07-14 Version K11b
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -48,6 +48,8 @@ To install or update this code ...
 8. Configure your USPS shipping module
 
 ===== CHANGE HISTORY =====
+2021-05-05 by lat9 2021-07-14 Version K11b
+    - Enabling 'soft' configuration settings to be used as overrides.
 2021-05-05 by lat9 2021-05-05 Version K11a
     - Adding notification to enable store-specific customizations for methods/prices offered (see https://github.com/lat9/usps for additional documentation).
     - Modify default international shipping 'base' dimensions to enable the offering of the International Small Flat-Rate Box method.

@@ -16,6 +16,7 @@
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike, 2018-03-28 - bislewl  Version K10 $
  * @version $Id: usps.php 2020-09-24 lat9 Version K11 $
  * @version $Id: usps.php 2021-05-05 lat9 Version K11a $
+ * @version $Id: usps.php 2021-07-14 lat9 Version K11b $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -1155,17 +1156,18 @@ class usps extends base
         // language file for additional information.
         //
         $usps_groundonly = '';
-        if (MODULE_SHIPPING_USPS_GROUNDONLY == 'true' && $_SESSION['cart']->in_cart_check('products_groundonly', '1')) {
+        if (MODULE_SHIPPING_USPS_GROUNDONLY == 'force' || (MODULE_SHIPPING_USPS_GROUNDONLY == 'true' && $_SESSION['cart']->in_cart_check('products_groundonly', '1'))) {
             $usps_groundonly = '<Content><ContentType>HAZMAT</ContentType></Content><GroundOnly>true</GroundOnly>';
         }
 
         // -----
         // Force Fragile.  If the store's indicated that some of its products are fragile, check
         // to see if any fragile products are in the cart, setting that indication in the shipping
-        // request.  Fragile rates will be returned.
+        // request.  Fragile rates will be returned.  The store can also indicate that *all* products
+        // are fragile.
         //
         $usps_fragile = '';
-        if (MODULE_SHIPPING_USPS_FRAGILE == 'true' && $_SESSION['cart']->in_cart_check('products_fragile', '1')) {
+        if (MODULE_SHIPPING_USPS_FRAGILE == 'force' || (MODULE_SHIPPING_USPS_FRAGILE == 'true' && $_SESSION['cart']->in_cart_check('products_fragile', '1'))) {
             $usps_fragile = '<Content><ContentType>Fragile</ContentType></Content>';
         }
 
