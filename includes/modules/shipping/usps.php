@@ -718,6 +718,11 @@ class usps extends base
                 // international
                 $usps_handling_fee = MODULE_SHIPPING_USPS_HANDLING_INT;
             }
+            
+            // -----
+            // Give an observer the opportunity to modify handling costs.
+            //
+            $this->notify('NOTIFY_SHIPPING_USPS_AFTER_HANDLING', array(), $order, $usps_shipping_weight, $shipping_num_boxes, $usps_handling_fee);
 
             // COST
             // clean out invalid characters
