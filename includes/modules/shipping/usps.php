@@ -410,8 +410,11 @@ class usps extends base
         if (isset($uspsQuote['Number']) && !isset($uspsQuote['error'])) {
             $uspsQuote['error'] = $uspsQuote['Number'] . ' - ' . $uspsQuote['Description'];
         }
+        if (isset($uspsQuote['Package']['Error'])) {
+            $uspsQuote['error'] = $uspsQuote['Package']['Error']['Number'] . ' - ' . $uspsQuote['Package']['Error']['Description'];
+        }
         if (isset($uspsQuote['error'])) {
-            if ($uspsQuote['Number'] == -2147219085) {
+            if (isset($uspsQuote['Number']) && $uspsQuote['Number'] == -2147219085) {
                 $this->quotes = array(
                     'module' => $this->title,
                     'error' => 'NO OPTIONS INSTALLED: ' . $uspsQuote['error']

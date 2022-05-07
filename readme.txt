@@ -48,6 +48,8 @@ To install or update this code ...
 8. Configure your USPS shipping module
 
 ===== CHANGE HISTORY =====
+2022-05-07 by lat9 2021-05-07 Version K11c
+    - Correcting PHP warnings when no quote is returned from USPS.
 2021-05-05 by lat9 2021-07-14 Version K11b
     - Enabling 'soft' configuration settings to be used as overrides.
 2021-05-05 by lat9 2021-05-05 Version K11a
