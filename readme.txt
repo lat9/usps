@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2021-07-14 Version K11b
+USPS RateV4 Intl RateV2 - 2021-07-10 Version K11b
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -28,7 +28,10 @@ To install or update this code ...
 
 1. go to your Zen Cart Admin to the Modules ... Shipping ...
 
-2. If USPS exists, Click on USPS and edit then save all your settings to NotePad as they will be lost
+2. If USPS exists, Click on USPS and edit then save all your settings to NotePad as they will be lost ... UNLESS
+   ... you've currently got '2021-05-05 K11a' installed and you're updating to '2022-07-10 K11b'.  For that
+   update (and possibly future ones), the update is **automatic** so that you don't need to re-enter all
+   your settings!
 
 3. Go to your Zen Cart Admin and to the Modules ... Shipping ...
 

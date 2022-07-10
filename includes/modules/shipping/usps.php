@@ -92,7 +92,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2021-05-05 K11a';
+    const USPS_CURRENT_VERSION = '2022-07-10 K11b';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -169,12 +169,12 @@ class usps extends base
     //
     protected function adminInitializationChecks()
     {
-        global $db;
+        global $db, $messageStack;
 
         if ($this->debug_enabled) {
             $this->title .=  '<span class="alert"> (Debug is ON: ' . MODULE_SHIPPING_USPS_DEBUG_MODE . ')</span>';
         }
-        if (MODULE_SHIPPING_USPS_SERVER != 'production') {
+        if (MODULE_SHIPPING_USPS_SERVER !== 'production') {
             $this->title .=  '<span class="alert"> (USPS Server set to: ' . MODULE_SHIPPING_USPS_SERVER . ')</span>';
         }
 
@@ -191,13 +191,43 @@ class usps extends base
         if ($this->enabled) {
             $this->checkConfiguration();
 
-            $chk_sql = $db->Execute(
-                "SELECT * 
-                   FROM " . TABLE_CONFIGURATION . " 
-                  WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%' ");
-            if (MODULE_SHIPPING_USPS_VERSION != self::USPS_CURRENT_VERSION || count($this->keys()) != $chk_sql->RecordCount()) {
-                $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
-                $this->enabled = false;
+            // -----
+            // If the store's  currently running on the 2021 version and the current version is just updating the
+            // trademark->registered-trademark changes, do an automatic update so that all the information doesn't
+            // have to be re-entered.
+            //
+            if (MODULE_SHIPPING_USPS_VERSION === '2021-05-05 K11a' && self::USPS_CURRENT_VERSION === '2022-07-10 K11b') {
+                $db->Execute(
+                    "UPDATE " . TABLE_CONFIGURATION . "
+                        SET configuration_value = REPLACE(configuration_value, 'Priority MailTM', 'Priority MailRM'),
+                            set_function = REPLACE(set_function, 'Priority MailTM', 'Priority MailRM')
+                      WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
+                      LIMIT 1"
+                );
+                $db->Execute(
+                    "UPDATE " . TABLE_CONFIGURATION . "
+                        SET configuration_value = REPLACE(configuration_value, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM'),
+                            set_function = REPLACE(set_function, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM')
+                      WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
+                      LIMIT 1"
+                );
+                $db->Execute(
+                    "UPDATE " . TABLE_CONFIGURATION . "
+                        SET configuration_value = '" . self::USPS_CURRENT_VERSION . "',
+                            set_function = 'zen_cfg_select_option(array(\'" . self::USPS_CURRENT_VERSION . "\'),'
+                      WHERE configuration_key = 'MODULE_SHIPPING_USPS_VERSION'
+                      LIMIT 1"
+                );
+                $messageStack->add_session('The USPS shipping module was automatically updated to v' . self::USPS_CURRENT_VERSION . '.', 'success');
+            } else {
+                $chk_sql = $db->Execute(
+                    "SELECT * 
+                       FROM " . TABLE_CONFIGURATION . " 
+                      WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%' ");
+                if (MODULE_SHIPPING_USPS_VERSION != self::USPS_CURRENT_VERSION || count($this->keys()) != $chk_sql->RecordCount()) {
+                    $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
+                    $this->enabled = false;
+                }
             }
         }
     }
