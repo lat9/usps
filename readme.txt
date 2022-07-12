@@ -28,29 +28,34 @@ To install or update this code ...
 
 1. go to your Zen Cart Admin to the Modules ... Shipping ...
 
-2. If USPS exists, Click on USPS and edit then save all your settings to NotePad as they will be lost ... UNLESS
-   ... you've currently got '2021-05-05 K11a' installed and you're updating to '2022-07-10 K11b'.  For that
-   update (and possibly future ones), the update is **automatic** so that you don't need to re-enter all
-   your settings!
+2. If USPS exists, click on USPS and see what version is currently installed.
+   a. If you currently have either '2021-05-05 K11a' or '2022-07-10 K11b' installed, continue the update at
+      step 3.  You don't need to save your settings or remove/reinstall to get the module updated.
+   b. Edit the USPS module, so that you can see your current settings.  Save those settings using a screenshot
+      or copy/paste them into a text editor (like NotePad or NotePad++).
+   c. Cancel out of the USPS module's settings edit and 'REMOVE' the module to uninstall the current version
+      of USPS.
 
-3. Go to your Zen Cart Admin and to the Modules ... Shipping ...
-
-4. If USPS exists, Click on USPS and then click REMOVE to uninstall the current version of USPS
-
-5. Load the new files with your FTP program they go in the same directories so you can copy the directory
+3. Load the new files with your FTP program they go in the same directories so you can copy the directory
    /includes to your server and overwrite the old files:
 
    - /includes/modules/shipping/usps.php
    - /includes/languages/english/modules/shipping/usps.php
    - /includes/templates/template_default/images/icons/shipping_usps.gif
 
-6. Go to your Zen Cart Admin and to the Modules ... Shipping ...
-
-7. Click on USPS shipping modules and click INSTALL
-
-8. Configure your USPS shipping module
+4. Go to your Zen Cart Admin and to the Modules ... Shipping ...
+   A. If you continued an update from step 2a above, the module has automatically updated itself and
+      preserved your previous settings -- you're all finished!
+   B. Otherwise, you are performing an initial installation or an update from an older version of USPS:
+      a.  Click on the USPS shipping module and then click the "Install" button.
+      b. If you are updating from an older version, copy your previous configuration settings from
+          those you saved at step 2b.  Otherwise, for an initial installation, enter the configuration
+          settings for your freshly-installed version of USPS.
+      c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2022-07-12 by lat9 2022-07-12 Version K11c
+    - USPS branding has changed for "Priority Mail Express International", too; no quotes being returned.
 2022-07-10 by lat9 2022-07-10 Version K11b
     - Enabling 'soft' configuration settings to be used as overrides.
     - Correcting PHP warnings when no quote is returned from USPS.

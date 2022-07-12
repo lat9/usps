@@ -16,7 +16,8 @@
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike, 2018-03-28 - bislewl  Version K10 $
  * @version $Id: usps.php 2020-09-24 lat9 Version K11 $
  * @version $Id: usps.php 2021-05-05 lat9 Version K11a $
- * @version $Id: usps.php 2022-05-07 lat9 Version K11b $
+ * @version $Id: usps.php 2022-07-10 lat9 Version K11b $
+ * @version $Id: usps.php 2022-07-12 lat9 Version K11c $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -92,7 +93,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2022-07-10 K11b';
+    const USPS_CURRENT_VERSION = '2022-07-12 K11c';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -192,41 +193,57 @@ class usps extends base
             $this->checkConfiguration();
 
             // -----
-            // If the store's  currently running on the 2021 version and the current version is just updating the
-            // trademark->registered-trademark changes, do an automatic update so that all the information doesn't
-            // have to be re-entered.
+            // If the store's version has changed from the current version or if the number of configuration 'keys'
+            // has changed, check first to see if automatic updates can be performed; if so do them!  Otherwise,
+            // the site's admin will need to save the current settings and uninstall/reinstall the module.
             //
-            if (MODULE_SHIPPING_USPS_VERSION === '2021-05-05 K11a' && self::USPS_CURRENT_VERSION === '2022-07-10 K11b') {
-                $db->Execute(
-                    "UPDATE " . TABLE_CONFIGURATION . "
-                        SET configuration_value = REPLACE(configuration_value, 'Priority MailTM', 'Priority MailRM'),
-                            set_function = REPLACE(set_function, 'Priority MailTM', 'Priority MailRM')
-                      WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
-                      LIMIT 1"
-                );
-                $db->Execute(
-                    "UPDATE " . TABLE_CONFIGURATION . "
-                        SET configuration_value = REPLACE(configuration_value, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM'),
-                            set_function = REPLACE(set_function, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM')
-                      WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
-                      LIMIT 1"
-                );
-                $db->Execute(
-                    "UPDATE " . TABLE_CONFIGURATION . "
-                        SET configuration_value = '" . self::USPS_CURRENT_VERSION . "',
-                            set_function = 'zen_cfg_select_option(array(\'" . self::USPS_CURRENT_VERSION . "\'),'
-                      WHERE configuration_key = 'MODULE_SHIPPING_USPS_VERSION'
-                      LIMIT 1"
-                );
-                $messageStack->add_session('The USPS shipping module was automatically updated to v' . self::USPS_CURRENT_VERSION . '.', 'success');
-            } else {
-                $chk_sql = $db->Execute(
-                    "SELECT * 
-                       FROM " . TABLE_CONFIGURATION . " 
-                      WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%' ");
-                if (MODULE_SHIPPING_USPS_VERSION != self::USPS_CURRENT_VERSION || count($this->keys()) != $chk_sql->RecordCount()) {
-                    $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
-                    $this->enabled = false;
+            $chk_sql = $db->Execute(
+                "SELECT * 
+                   FROM " . TABLE_CONFIGURATION . " 
+                  WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%' "
+            );
+            if (MODULE_SHIPPING_USPS_VERSION !== self::USPS_CURRENT_VERSION || count($this->keys()) !== $chk_sql->RecordCount()) {
+                switch (true) {
+                    case (MODULE_SHIPPING_USPS_VERSION ==='2021-05-05 K11a'):
+                        $db->Execute(
+                            "UPDATE " . TABLE_CONFIGURATION . "
+                                SET configuration_value = REPLACE(configuration_value, 'Priority MailTM', 'Priority MailRM'),
+                                    set_function = REPLACE(set_function, 'Priority MailTM', 'Priority MailRM')
+                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
+                              LIMIT 1"
+                        );
+                        $db->Execute(
+                            "UPDATE " . TABLE_CONFIGURATION . "
+                                SET configuration_value = REPLACE(configuration_value, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM'),
+                                    set_function = REPLACE(set_function, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM')
+                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
+                              LIMIT 1"
+                        );
+
+                    case (MODULE_SHIPPING_USPS_VERSION === '2022-07-10 K11b'):          //- Fall-through from above to continue checks
+                        $db->Execute(
+                            "UPDATE " . TABLE_CONFIGURATION . "
+                                SET configuration_value = REPLACE(configuration_value, 'Priority Mail Express InternationalTM', 'Priority Mail Express InternationalRM'),
+                                    set_function = REPLACE(set_function, 'Priority Mail Express InternationalTM', 'Priority Mail Express InternationalRM')
+                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
+                              LIMIT 1"
+                        );
+                        break;                                                          //- END OF AUTOMATIC UPDATE CHECKS!
+
+                    default:
+                        $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
+                        $this->enabled = false;
+                        break;
+                }
+                if ($this->enabled === true) {
+                    $db->Execute(
+                        "UPDATE " . TABLE_CONFIGURATION . "
+                            SET configuration_value = '" . self::USPS_CURRENT_VERSION . "',
+                                set_function = 'zen_cfg_select_option(array(\'" . self::USPS_CURRENT_VERSION . "\'),'
+                          WHERE configuration_key = 'MODULE_SHIPPING_USPS_VERSION'
+                          LIMIT 1"
+                    );
+                    $messageStack->add_session('The USPS shipping module was automatically updated to v' . self::USPS_CURRENT_VERSION . '.', 'success');
                 }
             }
         }
