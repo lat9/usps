@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2021-07-10 Version K11b
+USPS RateV4 Intl RateV2 - 2021-07-18 Version K11d
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -29,7 +29,7 @@ To install or update this code ...
 1. go to your Zen Cart Admin to the Modules ... Shipping ...
 
 2. If USPS exists, click on USPS and see what version is currently installed.
-   a. If you currently have either '2021-05-05 K11a' or '2022-07-10 K11b' installed, continue the update at
+   a. If you currently have either '2021-05-05 K11a' or later installed, continue the update at
       step 3.  You don't need to save your settings or remove/reinstall to get the module updated.
    b. Edit the USPS module, so that you can see your current settings.  Save those settings using a screenshot
       or copy/paste them into a text editor (like NotePad or NotePad++).
@@ -54,6 +54,8 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2022-07-18 by lat9 2022-07-18 Version K11d
+    - CommitmentName fields for some methods returning as an empty array and resulting in debug-logs being generated.
 2022-07-12 by lat9 2022-07-12 Version K11c
     - USPS branding has changed for "Priority Mail Express International", too; no quotes being returned.
 2022-07-10 by lat9 2022-07-10 Version K11b

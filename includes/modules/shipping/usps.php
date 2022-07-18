@@ -1,7 +1,7 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.5.4 through 1.5.7c
- * USPS RateV4 Intl RateV2 - May 05, 2021 Version K11a
+ * USPS Module for Zen Cart v1.5.4 through 1.5.7d
+ * USPS RateV4 Intl RateV2 - July 18, 2020 Version K11d
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -18,6 +18,7 @@
  * @version $Id: usps.php 2021-05-05 lat9 Version K11a $
  * @version $Id: usps.php 2022-07-10 lat9 Version K11b $
  * @version $Id: usps.php 2022-07-12 lat9 Version K11c $
+ * @version $Id: usps.php 2022-07-18 lat9 Version K11d $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -228,6 +229,9 @@ class usps extends base
                               WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
                               LIMIT 1"
                         );
+
+                    case (MODULE_SHIPPING_USPS_VERSION === '2022-07-10 K11c'):          //- Fall-through from above to continue checks
+
                         break;                                                          //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
@@ -1850,7 +1854,7 @@ class usps extends base
      */
     protected function parseDomesticTransitTimeResults($Package, $service)
     {
-        $time = isset($Package['CommitmentName']) ? $Package['CommitmentName'] : '';
+        $time = !empty($Package['CommitmentName']) ? $Package['CommitmentName'] : '';
         if ($time == '' || $this->transitTimeCalculationMode == 'CUSTOM') {
             switch (true) {
       /********************* CUSTOM START:  IF YOU HAVE CUSTOM TRANSIT TIMES ENTER THEM HERE ***************/
@@ -1892,7 +1896,7 @@ class usps extends base
 
         $this->transittime[$service] = $time == '' ? '' : ' (' . $time . ')';
 
-        if (!isset($Package['CommitmentName'])) {
+        if (empty($Package['CommitmentName'])) {
             $Package['CommitmentName'] = 'Not Returned';
         }
         $this->uspsDebug(' Transit Time (Domestic)' . "\nService:                    " . $service . "\nCommitmentName (from USPS): " . $Package['CommitmentName'] . "\n" . '$time (calculated):         ' . $time . "\nTranslation:               " . $this->transittime[$service] . "\n\n");
