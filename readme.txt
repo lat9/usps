@@ -54,7 +54,7 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
-2022-07-30 by lat9 2022-07-30 Version K11d
+2022-07-30 by lat9/proseLA 2022-07-30 Version K11d
     - CommitmentName fields for some methods returning as an empty array and resulting in debug-logs being generated.
 2022-07-12 by lat9 2022-07-12 Version K11c
     - USPS branding has changed for "Priority Mail Express International", too; no quotes being returned.
