@@ -10,9 +10,11 @@ Zen Cart support-thread link: https://www.zen-cart.com/showthread.php?227284-USP
 
 --------------------
 
-## Current Version: 2022-07-30 K11d
+## Current Version: 2022-08-07 K11e
 
 Starting with version `2022-07-10 K11b`, the module will attempt to automatically update its settings so that you no longer need to remove and re-install the module when a _small_ update is needed.
+
+Note: There was an error in the auto-upgrade test in `2022-07-30 K11d` that prevented an auto-update from `2022-07-12 K11c`.  This has been corrected in `2022-08-07 K11e` and later.
 
 Starting with version `2021-05-05 K11a`, there is now a notification raised by the USPS shipping module to enable site-specific customizations.  A site now has additional control over whether or not a configured shipping method is enabled as well as control of the title, pricing and insurance (if enabled) cost displayed to the customer.
 

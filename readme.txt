@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2021-07-30 Version K11d
+USPS RateV4 Intl RateV2 - 2021-08-07 Version K11e
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -54,6 +54,8 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2022-08-07 by lat9/proseLA 2022-08-07 Version K11e
+    - Auto-update not recognized for K11c -> K11d version, due to version name misspelling
 2022-07-30 by lat9/proseLA 2022-07-30 Version K11d
     - CommitmentName fields for some methods returning as an empty array and resulting in debug-logs being generated.
 2022-07-12 by lat9 2022-07-12 Version K11c
