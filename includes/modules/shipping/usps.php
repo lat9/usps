@@ -20,6 +20,7 @@
  * @version $Id: usps.php 2022-07-12 lat9 Version K11c $
  * @version $Id: usps.php 2022-07-30 lat9 Version K11d $
  * @version $Id: usps.php 2022-08-07 lat9 Version K11e $
+ * @version $Id: usps.php 2023-01-26 lat9 Version K11f $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -110,17 +111,17 @@ class usps extends base
 
     public function __construct()
     {
-        global $db, $template, $current_page_base, $current_page;
+        global $template, $current_page_base, $current_page;
 
         $this->code = 'usps';
-        $this->title = (defined('MODULE_SHIPPING_USPS_TITLE_SIZE') && MODULE_SHIPPING_USPS_TITLE_SIZE == 'Short' ? MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE : MODULE_SHIPPING_USPS_TEXT_TITLE);
+        $this->title = (defined('MODULE_SHIPPING_USPS_TITLE_SIZE') && MODULE_SHIPPING_USPS_TITLE_SIZE === 'Short' ? MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE : MODULE_SHIPPING_USPS_TEXT_TITLE);
         $this->description = MODULE_SHIPPING_USPS_TEXT_DESCRIPTION;
         $this->sort_order = (defined('MODULE_SHIPPING_USPS_SORT_ORDER')) ? MODULE_SHIPPING_USPS_SORT_ORDER : null;
         if ($this->sort_order === null) {
             return false;
         }
 
-        $this->enabled = (MODULE_SHIPPING_USPS_STATUS == 'True');
+        $this->enabled = (MODULE_SHIPPING_USPS_STATUS === 'True');
 
         $this->tax_class = (int)MODULE_SHIPPING_USPS_TAX_CLASS;
         $this->tax_basis = MODULE_SHIPPING_USPS_TAX_BASIS;
@@ -128,8 +129,8 @@ class usps extends base
         // -----
         // Set debug-related variables for use by the uspsDebug method.
         //
-        $this->debug_enabled = (MODULE_SHIPPING_USPS_DEBUG_MODE == 'Logs');
-        $this->debug_filename = ((defined('DIR_FS_LOGS')) ? DIR_FS_LOGS : DIR_FS_SQL_CACHE) . '/SHIP_usps_Debug_' . date('Ymd_His') . '.log';
+        $this->debug_enabled = (MODULE_SHIPPING_USPS_DEBUG_MODE === 'Logs');
+        $this->debug_filename = DIR_FS_LOGS . '/SHIP_usps_Debug_' . date('Ymd_His') . '.log';
 
         $this->typeCheckboxesSelected = explode(', ', MODULE_SHIPPING_USPS_TYPES);
         $this->update_status();
@@ -139,7 +140,7 @@ class usps extends base
         // needed to see if the module can remain enabled and/or to notify the current admin
         // of any configuration issues.
         //
-        if ($this->enabled) {
+        if ($this->enabled === true) {
             // -----
             // Admin-specific processing, limited to "Modules :: Shipping" so that any additions
             // to the shipping-module's name don't show up during 'Edit Orders' (and possibly other
@@ -151,7 +152,7 @@ class usps extends base
                 // conditions.  Limiting to that script so that the additions don't show up during
                 // Edit Orders (and possibly others).
                 //
-                if ($current_page == 'modules.php') {
+                if ($current_page === 'modules.php') {
                     $this->adminInitializationChecks();
                 }
             // -----
@@ -174,7 +175,7 @@ class usps extends base
     {
         global $db, $messageStack;
 
-        if ($this->debug_enabled) {
+        if ($this->debug_enabled === true) {
             $this->title .=  '<span class="alert"> (Debug is ON: ' . MODULE_SHIPPING_USPS_DEBUG_MODE . ')</span>';
         }
         if (MODULE_SHIPPING_USPS_SERVER !== 'production') {
@@ -191,7 +192,7 @@ class usps extends base
         // no quotes can be returned on the storefront.  If the condition is found, indicate that the module
         // is disabled so that the amber warning symbol appears in the admin shipping-modules' listing.
         //
-        if ($this->enabled) {
+        if ($this->enabled === true) {
             $this->checkConfiguration();
 
             // -----
@@ -276,7 +277,7 @@ class usps extends base
         $this->usps_countries = $this->usps_translation();
 
         // certain methods don't qualify if declared value is greater than $400
-        $this->types_to_skip_over_certain_value = array(
+        $this->types_to_skip_over_certain_value = [
            'Priority Mail InternationalRM Flat Rate Envelope' => 400,
            'Priority Mail InternationalRM Small Flat Rate Envelope' => 400,
            'Priority Mail InternationalRM Small Flat Rate Box' => 400,
@@ -287,7 +288,7 @@ class usps extends base
            'First-Class MailRM International Letter' => 400,
            'First-Class MailRM International Large Envelope' => 400,
            'First-Class Package International ServiceTM' => 400,
-        );
+        ];
 
         $this->getTransitTime = (strpos(MODULE_SHIPPING_USPS_OPTIONS, 'Display transit time') !== false);
 
@@ -316,14 +317,14 @@ class usps extends base
             }
             $usps_shipping_methods_cnt++;
         }
-        if ($usps_shipping_methods_cnt == 0) {
+        if ($usps_shipping_methods_cnt === 0) {
             $this->enabled = false;
             if (IS_ADMIN_FLAG === true) {
                 $this->title .= '<span class="alert">' . ' - Nothing has been selected for Quotes.' . '</span>';
             }
         }
 
-        if (SHIPPING_ORIGIN_COUNTRY != '223') {
+        if (SHIPPING_ORIGIN_COUNTRY !== '223') {
             $this->enabled = false;
             if (IS_ADMIN_FLAG === true) {
                 $this->title .= '<span class="alert">' . ' - USPS can only ship from USA, but your store is configured with another origin! See Admin->Configuration->Shipping/Packaging.' . '</span>';
@@ -347,7 +348,7 @@ class usps extends base
             $this->enabled = false;
         }
 
-        if ($this->enabled == true && (int)MODULE_SHIPPING_USPS_ZONE > 0) {
+        if ($this->enabled === true && isset($order) && (int)MODULE_SHIPPING_USPS_ZONE > 0) {
             $check_flag = false;
             $check = $db->Execute(
                 "SELECT zone_id 
@@ -356,15 +357,11 @@ class usps extends base
                     AND zone_country_id = " . (int)$order->delivery['country']['id'] . " 
                   ORDER BY zone_id ASC"
             );
-            while (!$check->EOF) {
-                if ($check->fields['zone_id'] < 1) {
-                    $check_flag = true;
-                    break;
-                } elseif ($check->fields['zone_id'] == $order->delivery['zone_id']) {
+            foreach ($check as $next_zone) {
+                if ($next_zone['zone_id'] < 1 || $next_zone['zone_id'] === $order->delivery['zone_id']) {
                     $check_flag = true;
                     break;
                 }
-                $check->MoveNext();
             }
 
             if ($check_flag == false) {
@@ -395,7 +392,7 @@ class usps extends base
 
         $usps_shipping_quotes = '';
         $iInfo = '';
-        $methods = array();
+        $methods = [];
         $usps_shipping_weight = ($shipping_weight < 0.0625) ? 0.0625 : $shipping_weight;
         $this->pounds = (int)$usps_shipping_weight;
 
@@ -407,17 +404,17 @@ class usps extends base
         // weight must be less than 35lbs and greater than 6 ounces or it is not machinable
         switch (true) {
             // force machinable for $0.49 remove the false && from the first case
-            case (false && ($this->is_us_shipment && ($this->pounds == 0 && $this->ounces <= 1))):
+            case (false && ($this->is_us_shipment === true && ($this->pounds === 0 && $this->ounces <= 1))):
                 // override admin choice, too light
                 $this->machinable = 'True';
                 break;
 
-            case ($this->is_us_shipment && ($this->pounds == 0 && $this->ounces < 6)):
+            case ($this->is_us_shipment === true && ($this->pounds === 0 && $this->ounces < 6)):
                 // override admin choice, too light
                 $this->machinable = 'False';
                 break;
 
-            case (!$this->is_us_shipment && ($this->pounds == 0 && $this->ounces < 3.5)):
+            case (!$this->is_us_shipment === true && ($this->pounds === 0 && $this->ounces < 3.5)):
                 // override admin choice, too light
                 $this->machinable = 'False';
                 break;
@@ -439,26 +436,26 @@ class usps extends base
         // NOTE: at the present time, with the Test/Staging server, using the new method of adding shipdate adds a lot more time to obtaining quotes
 
         // request quotes
-        $this->notify('NOTIFY_SHIPPING_USPS_BEFORE_GETQUOTE', array(), $order, $usps_shipping_weight, $shipping_num_boxes);
+        $this->notify('NOTIFY_SHIPPING_USPS_BEFORE_GETQUOTE', [], $order, $usps_shipping_weight, $shipping_num_boxes);
         
         $this->uspsQuote = $this->_getQuote();
 
-        $this->notify('NOTIFY_SHIPPING_USPS_AFTER_GETQUOTE', array(), $order, $usps_shipping_weight, $shipping_num_boxes);
+        $this->notify('NOTIFY_SHIPPING_USPS_AFTER_GETQUOTE', [], $order, $usps_shipping_weight, $shipping_num_boxes);
         $uspsQuote = $this->uspsQuote;
 
         // were errors encountered?
         if ($uspsQuote === -1) {
-            $this->quotes = array(
+            $this->quotes = [
                 'module' => $this->title,
                 'error' => MODULE_SHIPPING_USPS_TEXT_SERVER_ERROR . (MODULE_SHIPPING_USPS_SERVER == 'test' ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
-            );
+            ];
             return $this->quotes;
         }
         if (!is_array($uspsQuote)) {
-            $this->quotes = array(
+            $this->quotes = [
                 'module' => $this->title,
                 'error' => MODULE_SHIPPING_USPS_TEXT_ERROR . (MODULE_SHIPPING_USPS_SERVER == 'test' ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
-            );
+            ];
             return $this->quotes;
         }
         if (isset($uspsQuote['Number']) && !isset($uspsQuote['error'])) {
@@ -469,15 +466,15 @@ class usps extends base
         }
         if (isset($uspsQuote['error'])) {
             if (isset($uspsQuote['Number']) && $uspsQuote['Number'] == -2147219085) {
-                $this->quotes = array(
+                $this->quotes = [
                     'module' => $this->title,
                     'error' => 'NO OPTIONS INSTALLED: ' . $uspsQuote['error']
-                );
+                ];
             } else {
-                $this->quotes = array(
+                $this->quotes = [
                     'module' => $this->title,
                     'error' => $uspsQuote['error']
-                );
+                ];
             }
             return $this->quotes;
         }
@@ -492,50 +489,50 @@ class usps extends base
         $servicesSelectedIntl = $this->extra_service();
 
         // Domestic/US destination:
-        if ($this->is_us_shipment) {
-            $dExtras = array(); // We're going to populate this with a list of "friendly names" of services "checked" to "Y" in our checkboxes
+        if ($this->is_us_shipment === true) {
+            $dExtras = []; // We're going to populate this with a list of "friendly names" of services "checked" to "Y" in our checkboxes
             $dOptions = explode(', ', MODULE_SHIPPING_USPS_DMST_SERVICES); // domestic
 
             foreach ($dOptions as $key => $val) {
                 if (strlen($dOptions[$key]) > 1) {
-                    if ($dOptions[$key+1] == 'C' || $dOptions[$key+1] == 'S' || $dOptions[$key+1] == 'Y') {
+                    if ($dOptions[$key + 1] === 'C' || $dOptions[$key + 1] === 'S' || $dOptions[$key + 1] === 'Y') {
                         $services_domestic .= $dOptions[$key] . "\n";
-                        $dExtras[$dOptions[$key]] = $dOptions[$key+1];
+                        $dExtras[$dOptions[$key]] = $dOptions[$key + 1];
                     }
                 }
             }
         } else {
             // International destination:
-            $iExtras = array();
+            $iExtras = [];
             $iOptions = explode(', ', MODULE_SHIPPING_USPS_INTL_SERVICES);
             foreach ($iOptions as $key => $val) {
                 if (strlen($iOptions[$key]) > 1) {
-                    if ($iOptions[$key+1] == 'C' || $iOptions[$key+1] == 'S' || $iOptions[$key+1] == 'Y') {
+                    if ($iOptions[$key + 1] === 'C' || $iOptions[$key + 1] === 'S' || $iOptions[$key + 1] === 'Y') {
                         $services_international .= $iOptions[$key] . "\n";
-                        $iExtras[$iOptions[$key]] = $iOptions[$key+1];
+                        $iExtras[$iOptions[$key]] = $iOptions[$key + 1];
                     }
                 }
             }
     
-            if (MODULE_SHIPPING_USPS_REGULATIONS == 'True') {
+            if (MODULE_SHIPPING_USPS_REGULATIONS === 'True') {
                 $iInfo = 
                     '<div id="iInfo">' . "\n" .
                     '  <div id="showInfo" class="ui-state-error" style="cursor:pointer; text-align:center;" onclick="$(\'#showInfo\').hide();$(\'#hideInfo, #Info\').show();">' . MODULE_SHIPPING_USPS_TEXT_INTL_SHOW . '</div>' . "\n" .
                     '  <div id="hideInfo" class="ui-state-error" style="cursor:pointer; text-align:center; display:none;" onclick="$(\'#hideInfo, #Info\').hide();$(\'#showInfo\').show();">' . MODULE_SHIPPING_USPS_TEXT_INTL_HIDE .'</div>' . "\n" .
                     '  <div id="Info" class="ui-state-highlight" style="display:none; padding:10px; max-height:200px; overflow:auto;">' . 
-                    '    <b>Prohibitions:</b><br />' . nl2br($uspsQuote['Package']['Prohibitions']) . '<br /><br />' . 
-                    '    <b>Restrictions:</b><br />' . nl2br($uspsQuote['Package']['Restrictions']) . '<br /><br />' . 
-                    '    <b>Observations:</b><br />' . nl2br($uspsQuote['Package']['Observations']) . '<br /><br />' . 
-                    '    <b>CustomsForms:</b><br />' . nl2br($uspsQuote['Package']['CustomsForms']) . '<br /><br />' . 
-                    '    <b>ExpressMail:</b><br />' . nl2br($uspsQuote['Package']['ExpressMail']) . '<br /><br />' . 
-                    '    <b>AreasServed:</b><br />' . nl2br($uspsQuote['Package']['AreasServed']) . '<br /><br />' . 
-                    '    <b>AdditionalRestrictions:</b><br />' . nl2br($uspsQuote['Package']['AdditionalRestrictions']) .
+                    '    <b>Prohibitions:</b><br>' . nl2br($uspsQuote['Package']['Prohibitions']) . '<br><br>' . 
+                    '    <b>Restrictions:</b><br>' . nl2br($uspsQuote['Package']['Restrictions']) . '<br><br>' . 
+                    '    <b>Observations:</b><br>' . nl2br($uspsQuote['Package']['Observations']) . '<br><br>' . 
+                    '    <b>CustomsForms:</b><br>' . nl2br($uspsQuote['Package']['CustomsForms']) . '<br><br>' . 
+                    '    <b>ExpressMail:</b><br>' . nl2br($uspsQuote['Package']['ExpressMail']) . '<br><br>' . 
+                    '    <b>AreasServed:</b><br>' . nl2br($uspsQuote['Package']['AreasServed']) . '<br><br>' . 
+                    '    <b>AdditionalRestrictions:</b><br>' . nl2br($uspsQuote['Package']['AdditionalRestrictions']) .
                     '  </div>' . "\n" .
                     '</div>';
             }
         }
 
-        if ($this->is_us_shipment) {
+        if ($this->is_us_shipment === true) {
             $PackageSize = count($uspsQuote['Package']);
             // if object has no legitimate children, turn it into a firstborn:
             if (isset($uspsQuote['Package']['ZipDestination']) && !isset($uspsQuote['Package'][0]['Postage'])) {
@@ -565,8 +562,8 @@ class usps extends base
             if (!empty($uspsQuote['Package'][$i]['Error'])) {
                 continue;
             }
-            $Services = array();
-            $hiddenServices = array();
+            $Services = [];
+            $hiddenServices = [];
             $hiddenCost = 0;
             $handling = 0;
             $usps_insurance_charge = 0;
@@ -578,12 +575,14 @@ class usps extends base
                 if (!empty($Package['SpecialServices']['SpecialService'])) {
                     // if object has no legitimate children, turn it into a firstborn:
                     if (isset($Package['SpecialServices']['SpecialService']['ServiceName']) && !isset($Package['SpecialServices']['SpecialService'][0])) {
-                        $Package['SpecialServices']['SpecialService'] = array($Package['SpecialServices']['SpecialService']);
+                        $Package['SpecialServices']['SpecialService'] = [
+                            $Package['SpecialServices']['SpecialService']
+                        ];
                     }
 
                     foreach ($Package['SpecialServices']['SpecialService'] as $key => $val) {
                         // translate friendly names for Insurance Restricted Delivery 177, 178, 179, since USPS rebranded to remove all sense of explanations
-                        if ($val['ServiceName'] == 'Insurance Restricted Delivery') {
+                        if ($val['ServiceName'] === 'Insurance Restricted Delivery') {
                             if ($val['ServiceID'] == 178) {
                                 $val['ServiceName'] = 'Insurance Restricted Delivery (Priority Mail Express)';
                             }
@@ -592,7 +591,7 @@ class usps extends base
                             }
                         }
                         // translate friendly names for insurance 100, 101, 125, since USPS rebranded to remove all sense of explanations
-                        if ($val['ServiceName'] == 'Insurance') {
+                        if ($val['ServiceName'] === 'Insurance') {
                             if ($val['ServiceID'] == 125) {
                                 $val['ServiceName'] = 'Priority Mail Insurance';
                             }
@@ -603,14 +602,14 @@ class usps extends base
 
                         $val['ServiceName'] = $this->clean_usps_marks($val['ServiceName']);
 
-                        if (!empty($dExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && !empty($val['AvailableOnline']) && strtoupper($val['AvailableOnline']) == 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail' && !empty($val['Available']) && strtoupper($val['Available']) == 'TRUE'))) {
+                        if (!empty($dExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && !empty($val['AvailableOnline']) && strtoupper($val['AvailableOnline']) === 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && !empty($val['Available']) && strtoupper($val['Available']) === 'TRUE'))) {
                             $val['ServiceAdmin'] = $this->clean_usps_marks($dExtras[$val['ServiceName']]);
                             $Services[] = $val;
                         }
                     }
                 }
 
-                $cost = MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && isset($Package['CommercialRate']) ? $Package['CommercialRate'] : $Package['Rate'];
+                $cost = (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && isset($Package['CommercialRate'])) ? $Package['CommercialRate'] : $Package['Rate'];
                 $type = $this->clean_usps_marks($Package['MailService']);
                 // methods shipping zone
                 $usps_shipping_methods_zone = $uspsQuote['Package'][$i]['Zone'];
@@ -619,28 +618,25 @@ class usps extends base
                 if (isset($Package['ExtraServices']['ExtraService']) && is_array($Package['ExtraServices']['ExtraService'])) {
                     // if object has no legitimate children, turn it into a firstborn:
                     if (isset($Package['ExtraServices']['ExtraService']['ServiceName']) && !isset($Package['ExtraServices']['ExtraService'][0])) {
-                        $Package['ExtraServices']['ExtraService'] = array($Package['ExtraServices']['ExtraService']);
+                        $Package['ExtraServices']['ExtraService'] = [
+                            $Package['ExtraServices']['ExtraService']
+                        ];
                     }
 
                     foreach ($Package['ExtraServices']['ExtraService'] as $key => $val) {
                         $val['ServiceName'] = $this->clean_usps_marks($val['ServiceName']);
-                        if (isset($iExtras[$val['ServiceName']]) && zen_not_null($iExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && strtoupper($val['OnlineAvailable']) == 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail' && strtoupper($val['Available']) == 'TRUE'))) {
+                        if (isset($iExtras[$val['ServiceName']]) && !empty($iExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && strtoupper($val['OnlineAvailable']) === 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && strtoupper($val['Available']) === 'TRUE'))) {
                             $val['ServiceAdmin'] = $this->clean_usps_marks($iExtras[$val['ServiceName']]);
                             $Services[] = $val;
                         }
                     }
                 }
-                $cost = MODULE_SHIPPING_USPS_RATE_TYPE == 'Online' && zen_not_null($Package['CommercialPostage']) ? $Package['CommercialPostage'] : $Package['Postage'];
+                $cost = (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && !empty($Package['CommercialPostage'])) ? $Package['CommercialPostage'] : $Package['Postage'];
                 $type = $this->clean_usps_marks($Package['SvcDescription']);
             }
             if ($cost == 0) {
                 continue;
             }
-
-            // This is used for overriding the matching needed because USPS is inconsistent in how they return the names
-
-//  // simulate appending the RM
-//  if (preg_match('#First#', $type)) $type .="RM";
 
             // -----
             // USPS, as of 7/10/2022, is now returning the 'Priority MailRM Flat Rate Envelope' as
@@ -663,8 +659,8 @@ class usps extends base
             // eof: example to block USPS Priority MailRM Small Flat Rate Box when anything from master_categories_id 12 or 15 are in the cart
 
             // Detect which First-Class type has been quoted, since USPS doesn't consistently return the type in the name of the service
-            if (!isset($Package['FirstClassMailType']) || $Package['FirstClassMailType'] == '') {
-                if (isset($uspsQuote['Package'][$i]) && isset($uspsQuote['Package'][$i]['FirstClassMailType']) && $uspsQuote['Package'][$i]['FirstClassMailType'] != '') {
+            if (!isset($Package['FirstClassMailType']) || $Package['FirstClassMailType'] === '') {
+                if (isset($uspsQuote['Package'][$i]) && isset($uspsQuote['Package'][$i]['FirstClassMailType']) && $uspsQuote['Package'][$i]['FirstClassMailType'] !== '') {
                     $Package['FirstClassMailType'] = $uspsQuote['Package'][$i]['FirstClassMailType']; // LETTER or FLAT or PARCEL
                 }
             }
@@ -693,9 +689,10 @@ class usps extends base
             if (isset($this->types_to_skip_over_certain_value[$type]) && $_SESSION['cart']->total > $this->types_to_skip_over_certain_value[$type]) {
                 continue;
             }
+
             // process weight/handling settings from admin checkboxes
             foreach ($this->typeCheckboxesSelected as $key => $val) {
-                if (is_numeric($val) || $val == '') {
+                if (is_numeric($val) || $val === '') {
                     continue;
                 }
 
@@ -707,9 +704,9 @@ class usps extends base
                         continue;
                     }
 
-                    $minweight = $this->typeCheckboxesSelected[$key+1];
-                    $maxweight = $this->typeCheckboxesSelected[$key+2];
-                    $handling = $this->typeCheckboxesSelected[$key+3];
+                    $minweight = $this->typeCheckboxesSelected[$key + 1];
+                    $maxweight = $this->typeCheckboxesSelected[$key + 2];
+                    $handling = $this->typeCheckboxesSelected[$key + 3];
 
                     if ($val != $type && preg_match('#' . $Package['lookupRegex'] . '#i', $val) ) {
                         $type_rebuilt = $val;
@@ -718,14 +715,15 @@ class usps extends base
                 }
             }
 
-            $rate_type = (MODULE_SHIPPING_USPS_RATE_TYPE == 'Online') ? 'PriceOnline' : 'Price';
+            $rate_type = (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online') ? 'PriceOnline' : 'Price';
             foreach ($Services as $key => $val) {
-                if ($Services[$key]['ServiceAdmin'] == 'Y') {
+                if ($Services[$key]['ServiceAdmin'] === 'Y') {
                     $hiddenServices[] = array(
                         $Services[$key]['ServiceName'] . ' [' . $Services[$key]['ServiceID'] . ']' => $Services[$key][$rate_type]
                     );
                 }
             }
+
             // prepare costs associated with selected additional services
             $hidden_costs_breakdown = '';
             foreach ($hiddenServices as $key => $val) {
@@ -745,7 +743,7 @@ class usps extends base
                     $insurance_test_flag = false;
                     if (stripos($key1, 'Insurance') !== false) {
                         // Domestic
-                        if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
+                        if ($order->delivery['country']['id'] === SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment === true) {
                             if (strpos($servicesSelectedDomestic, $serviceID) !== false) {
                                 if (strpos($type, 'Priority Mail') !== false) {
                                     if (strpos($type, 'Express') !== false) {
@@ -768,7 +766,7 @@ class usps extends base
                                 $insurance_test_flag = true;
                             }
                         }
-                        if ($insurance_test_flag) {
+                        if ($insurance_test_flag === true) {
                             $usps_insurance_charge = $val1;
                         }
                     }
@@ -776,7 +774,7 @@ class usps extends base
             }
 
             // set module-specific handling fee
-            if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
+            if ($order->delivery['country']['id'] === SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment === true) {
                 // domestic/national
                 $usps_handling_fee = MODULE_SHIPPING_USPS_HANDLING;
             } else {
@@ -787,20 +785,32 @@ class usps extends base
             // COST
             // clean out invalid characters
             $cost = preg_replace('/[^0-9.]/', '',  $cost);
-            
+
             // add handling for shipping method costs for extra services applied
             $cost_original = $cost;
             $cost = ($cost + $handling + $hiddenCost) * $shipping_num_boxes;
             // add handling fee per Box or per Order
-            $cost += (MODULE_SHIPPING_USPS_HANDLING_METHOD == 'Box') ? $usps_handling_fee * $shipping_num_boxes : $usps_handling_fee;
+            $cost += (MODULE_SHIPPING_USPS_HANDLING_METHOD === 'Box') ? $usps_handling_fee * $shipping_num_boxes : $usps_handling_fee;
 
             // set the output title display name back to correct format
-            $title = str_replace(array('RM', 'TM', '**'), array('&reg;', '&trade;', ''), $type_rebuilt);
+            $title = str_replace(
+                [
+                    'RM',
+                    'TM',
+                    '**'
+                ],
+                [
+                    '&reg;',
+                    '&trade;',
+                    ''
+                ],
+                $type_rebuilt
+            );
 
             // process customization of transit times in quotes
             if (strpos(MODULE_SHIPPING_USPS_OPTIONS, 'Display transit time') !== false) {
-                if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
-                    if ($this->transitTimeCalculationMode != 'OLD') {
+                if ($order->delivery['country']['id'] === SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment === true) {
+                    if ($this->transitTimeCalculationMode !== 'OLD') {
                         $this->parseDomesticTransitTimeResults($Package, $type_rebuilt);
                     }
                 } else {
@@ -815,21 +825,21 @@ class usps extends base
             if ($usps_shipping_weight <= $maxweight && $usps_shipping_weight > $minweight) {
                 $found = true;
                 if ($method != $type && $method != $type_rebuilt) {
-                    if ($method != '') {
+                    if ($method !== '') {
                         continue;
                     }
                     $found = false;
                     foreach ($this->typeCheckboxesSelected as $key => $val) {
-                        if (is_numeric($val) || $val == '') {
+                        if (is_numeric($val) || $val === '') {
                             continue;
                         }
-                        if ($val == $type || preg_match('#' . $Package['lookupRegex'] . '#i', $val) ) {
+                        if ($val == $type || preg_match('#' . $Package['lookupRegex'] . '#i', $val)) {
                             $found = true;
                             break;
                         }
                     }
                 }
-                if (!$found) {
+                if ($found === false) {
                     continue;
                 }
 
@@ -839,7 +849,7 @@ class usps extends base
                 }
 
                 // USPS customize for filtering displayed methods and costs
-                if ($this->is_us_shipment && MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US == 'True' && stripos($type, 'First-Class') !== false && $cnt_first > 1) {
+                if ($this->is_us_shipment === true && MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US === 'True' && stripos($type, 'First-Class') !== false && $cnt_first > 1) {
                     continue;
                 }
 
@@ -851,48 +861,66 @@ class usps extends base
                 $saved_cost = $cost;
                 $saved_insurance_cost = $usps_insurance_charge;
                 $this->notify('NOTIFY_USPS_UPDATE_OR_DISALLOW_TYPE', $type_rebuilt, $allow_type, $title, $cost, $usps_insurance_charge);
+
                 if ($allow_type === false) {
                     $this->uspsDebug("Shipping method '$type_rebuilt' disallowed by observer.");
                     continue;
                 }
-                if ($saved_title != $title || $saved_cost != $cost || $saved_insurance_cost != $usps_insurance_charge) {
+                if ($saved_title !== $title || $saved_cost !== $cost || $saved_insurance_cost !== $usps_insurance_charge) {
                     $this->uspsDebug("Shipping method '$type_rebuilt', parameters changed by observer:\n\tTitle: $saved_title vs. $title.\n\tCost: $saved_cost vs. $cost.\n\tInsurance: $saved_insurance_cost vs. $usps_insurange_charge.");
                 }
-                $methods[] = array(
+                $methods[] = [
                     'id' => $type_rebuilt,
                     'title' => $title,
                     'cost' => $cost,
                     'insurance' => $usps_insurance_charge,
-                );
-                $usps_shipping_quotes .= $title . "\n" . ' Original cost: ' . number_format($cost_original, 2) . ($hiddenCost ? ($this->is_us_shipment ? ' SpecialServices: ' : ' ExtraServices: ') . number_format($hiddenCost, 2) : '') . ' Total Cost: ' . number_format($cost, 2) . ($usps_insurance_charge ? ' - $usps_insurance_charge: ' . number_format($usps_insurance_charge, 2) : '') . "\n";
+                ];
+                $usps_shipping_quotes .=
+                    $title . "\n" .
+                    ' Original cost: ' .
+                    number_format($cost_original, 2) .
+                    ($hiddenCost ? ($this->is_us_shipment ? ' SpecialServices: ' : ' ExtraServices: ') .
+                    number_format($hiddenCost, 2) : '') .
+                    ' Total Cost: ' . number_format($cost, 2) .
+                    ($usps_insurance_charge ? ' - $usps_insurance_charge: ' . number_format($usps_insurance_charge, 2) : '') . "\n";
                 $usps_shipping_quotes .= $hidden_costs_breakdown . "\n";
             }
         }  // end for $i to $PackageSize
 
-        if (count($methods) == 0) {
+        if (count($methods) === 0) {
             return false;
         }
 
         // add shipping quotes to logs
-        $usps_shipping_quotes = str_replace(array('&amp;reg;', '&amp;trade;'), array('RM', 'TM'), htmlspecialchars($usps_shipping_quotes));
+        $usps_shipping_quotes = str_replace(
+            [
+                '&amp;reg;',
+                '&amp;trade;',
+            ],
+            [
+                'RM',
+                'TM'
+            ],
+            htmlspecialchars($usps_shipping_quotes)
+        );
         $usps_shipping_quotes = '==================================' . "\n\n" . 'Rate Quotes:' . "\n" . $usps_shipping_quotes . "\n\n";
         $this->uspsDebug($usps_shipping_quotes);
 
         // sort results
-        if (MODULE_SHIPPING_USPS_QUOTE_SORT != 'Unsorted') {
-            if (count($methods) > 1) {
-                if (substr(MODULE_SHIPPING_USPS_QUOTE_SORT, 0, 5) == 'Price') {
+        if (MODULE_SHIPPING_USPS_QUOTE_SORT !== 'Unsorted') {
+            if (count($methods) !== 0) {
+                if (strpos(MODULE_SHIPPING_USPS_QUOTE_SORT, 'Price') === 0) {
                     foreach ($methods as $c => $key) {
                         $sort_cost[] = $key['cost'];
                         $sort_id[] = $key['id'];
                     }
-                    array_multisort($sort_cost, (MODULE_SHIPPING_USPS_QUOTE_SORT == 'Price-LowToHigh' ? SORT_ASC : SORT_DESC), $sort_id, SORT_ASC, $methods);
+                    array_multisort($sort_cost, (MODULE_SHIPPING_USPS_QUOTE_SORT === 'Price-LowToHigh' ? SORT_ASC : SORT_DESC), $sort_id, SORT_ASC, $methods);
                 } else {
                     foreach ($methods as $c => $key) {
                         $sort_key[] = $key['title'];
                         $sort_id[] = $key['id'];
                     }
-                    array_multisort($sort_key, (MODULE_SHIPPING_USPS_QUOTE_SORT == 'Alphabetical' ? SORT_ASC : SORT_DESC), $sort_id, SORT_ASC, $methods);
+                    array_multisort($sort_key, (MODULE_SHIPPING_USPS_QUOTE_SORT === 'Alphabetical' ? SORT_ASC : SORT_DESC), $sort_id, SORT_ASC, $methods);
                 }
             }
         }
@@ -915,19 +943,19 @@ class usps extends base
                     break;
             }
         }
-        $this->quotes = array(
+        $this->quotes = [
             'id' => $this->code,
             'module' => $this->title . $show_box_weight,
             'methods' => $methods,
             'tax' => $this->tax_class > 0 ? zen_get_tax_rate($this->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) : null,
-        );
+        ];
 
         // add icon/message, if any
-        if ($this->icon != '') {
+        if ($this->icon !== '') {
             $this->quotes['icon'] = zen_image($this->icon, $this->title);
         }
-        if ($iInfo != '') {
-            $this->quotes['icon'] .= '<br />' . $iInfo;
+        if ($iInfo !== '') {
+            $this->quotes['icon'] .= '<br>' . $iInfo;
         }
 
         $this->notify('NOTIFY_SHIPPING_USPS_QUOTES_READY_TO_RETURN');
@@ -942,6 +970,7 @@ class usps extends base
     public function check()
     {
         global $db;
+
         if (!isset($this->_check)) {
             $check_query = $db->Execute("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_SHIPPING_USPS_STATUS' LIMIT 1");
             $this->_check = $check_query->RecordCount();
@@ -967,19 +996,19 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('USPS Version Date', 'MODULE_SHIPPING_USPS_VERSION', '" . self::USPS_CURRENT_VERSION . "', 'You have installed:', 6, 0, 'zen_cfg_select_option(array(\'" . self::USPS_CURRENT_VERSION . "\'), ', now())"
+                ('USPS Version Date', 'MODULE_SHIPPING_USPS_VERSION', '" . self::USPS_CURRENT_VERSION . "', 'You have installed:', 6, 0, 'zen_cfg_select_option([\'" . self::USPS_CURRENT_VERSION . "\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
              VALUES 
-                ('Enable USPS Shipping', 'MODULE_SHIPPING_USPS_STATUS', 'True', 'Do you want to offer USPS shipping?', 6, 0, 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())"
+                ('Enable USPS Shipping', 'MODULE_SHIPPING_USPS_STATUS', 'True', 'Do you want to offer USPS shipping?', 6, 0, 'zen_cfg_select_option([\'True\', \'False\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
              VALUES 
-                ('Full Name or Short Name', 'MODULE_SHIPPING_USPS_TITLE_SIZE', 'Long', 'Do you want to use a Long or Short name for USPS shipping?', 6, 0, 'zen_cfg_select_option(array(\'Long\', \'Short\'), ', now())"
+                ('Full Name or Short Name', 'MODULE_SHIPPING_USPS_TITLE_SIZE', 'Long', 'Do you want to use a Long or Short name for USPS shipping?', 6, 0, 'zen_cfg_select_option([\'Long\', \'Short\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
@@ -1004,25 +1033,25 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Which server to use', 'MODULE_SHIPPING_USPS_SERVER', 'production', 'An account at USPS is needed to use the Production server', 6, 0, 'zen_cfg_select_option(array(\'test\', \'production\'), ', now())"
+                ('Which server to use', 'MODULE_SHIPPING_USPS_SERVER', 'production', 'An account at USPS is needed to use the Production server', 6, 0, 'zen_cfg_select_option([\'test\', \'production\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('All Packages are Machinable?', 'MODULE_SHIPPING_USPS_MACHINABLE', 'False', 'Are all products shipped machinable based on C700 Package Services 2.0 Nonmachinable PARCEL POST USPS Rules and Regulations?<br /><br /><strong>Note: Nonmachinable packages will usually result in a higher Parcel Post Rate Charge.<br /><br />Packages 35lbs or more, or less than 6 ounces (.375), will be overridden and set to False</strong>', 6, 0, 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())"
+                ('All Packages are Machinable?', 'MODULE_SHIPPING_USPS_MACHINABLE', 'False', 'Are all products shipped machinable based on C700 Package Services 2.0 Nonmachinable PARCEL POST USPS Rules and Regulations?<br><br><strong>Note: Nonmachinable packages will usually result in a higher Parcel Post Rate Charge.<br><br>Packages 35lbs or more, or less than 6 ounces (.375), will be overridden and set to False</strong>', 6, 0, 'zen_cfg_select_option([\'True\', \'False\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Quote Sort Order', 'MODULE_SHIPPING_USPS_QUOTE_SORT', 'Price-LowToHigh', 'Sorts the returned quotes using the service name Alphanumerically or by Price. Unsorted will give the order provided by USPS.', 6, 0, 'zen_cfg_select_option(array(\'Unsorted\',\'Alphabetical\', \'Price-LowToHigh\', \'Price-HighToLow\'), ', now())"
+                ('Quote Sort Order', 'MODULE_SHIPPING_USPS_QUOTE_SORT', 'Price-LowToHigh', 'Sorts the returned quotes using the service name Alphanumerically or by Price. Unsorted will give the order provided by USPS.', 6, 0, 'zen_cfg_select_option([\'Unsorted\',\'Alphabetical\', \'Price-LowToHigh\', \'Price-HighToLow\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Decimal Settings', 'MODULE_SHIPPING_USPS_DECIMALS', '3', 'Decimal Setting can be 1, 2 or 3. Sometimes International requires 2 decimals, based on Tare Rates or Product weights. Do you want to use 1, 2 or 3 decimals?', 6, 0, 'zen_cfg_select_option(array(\'1\', \'2\', \'3\'), ', now())"
+                ('Decimal Settings', 'MODULE_SHIPPING_USPS_DECIMALS', '3', 'Decimal Setting can be 1, 2 or 3. Sometimes International requires 2 decimals, based on Tare Rates or Product weights. Do you want to use 1, 2 or 3 decimals?', 6, 0, 'zen_cfg_select_option([\'1\', \'2\', \'3\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
@@ -1034,25 +1063,25 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Tax Basis', 'MODULE_SHIPPING_USPS_TAX_BASIS', 'Shipping', 'On what basis is Shipping Tax calculated. Options are<br />Shipping - Based on customers Shipping Address<br />Billing Based on customers Billing address<br />Store - Based on Store address if Billing/Shipping Zone equals Store zone', 6, 0, 'zen_cfg_select_option(array(\'Shipping\', \'Billing\', \'Store\'), ', now())"
+                ('Tax Basis', 'MODULE_SHIPPING_USPS_TAX_BASIS', 'Shipping', 'On what basis is Shipping Tax calculated. Options are<br>Shipping - Based on customers Shipping Address<br>Billing Based on customers Billing address<br>Store - Based on Store address if Billing/Shipping Zone equals Store zone', 6, 0, 'zen_cfg_select_option([\'Shipping\', \'Billing\', \'Store\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('USPS Options', 'MODULE_SHIPPING_USPS_OPTIONS', '--none--', 'Select from the following the USPS options.<br />note: this adds a considerable delay in obtaining quotes.', '6', '16', 'zen_cfg_select_multioption(array(\'Display weight\', \'Display transit time\'), ',  now())"
+                ('USPS Options', 'MODULE_SHIPPING_USPS_OPTIONS', '--none--', 'Select from the following the USPS options.<br>note: this adds a considerable delay in obtaining quotes.', '6', '16', 'zen_cfg_select_multioption([\'Display weight\', \'Display transit time\'], ',  now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('USPS Domestic Transit Time Calculation Mode', 'MODULE_SHIPPING_USPS_TRANSIT_TIME_CALCULATION_MODE', 'NEW', 'Select from the following the USPS options.<br />note: NEW and OLD will add additional time to quotes. CUSTOM allows your custom shipping days.', '6', '16', 'zen_cfg_select_option(array(\'CUSTOM\', \'NEW\', \'OLD\'), ',  now())"
+                ('USPS Domestic Transit Time Calculation Mode', 'MODULE_SHIPPING_USPS_TRANSIT_TIME_CALCULATION_MODE', 'NEW', 'Select from the following the USPS options.<br>note: NEW and OLD will add additional time to quotes. CUSTOM allows your custom shipping days.', '6', '16', 'zen_cfg_select_option([\'CUSTOM\', \'NEW\', \'OLD\'], ',  now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Debug Mode', 'MODULE_SHIPPING_USPS_DEBUG_MODE', 'Off', 'Would you like to enable debug mode?  If set to <em>Logs</em>, a file will be written to the store\'s /logs directory on each USPS request.', 6, 0, 'zen_cfg_select_option(array(\'Off\', \'Logs\'), ', now())"
+                ('Debug Mode', 'MODULE_SHIPPING_USPS_DEBUG_MODE', 'Off', 'Would you like to enable debug mode?  If set to <em>Logs</em>, a file will be written to the store\'s /logs directory on each USPS request.', 6, 0, 'zen_cfg_select_option([\'Off\', \'Logs\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
@@ -1070,7 +1099,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Handling Per Order or Per Box', 'MODULE_SHIPPING_USPS_HANDLING_METHOD', 'Box', 'Do you want to charge Handling Fee Per Order or Per Box?', 6, 0, 'zen_cfg_select_option(array(\'Order\', \'Box\'), ', now())"
+                ('Handling Per Order or Per Box', 'MODULE_SHIPPING_USPS_HANDLING_METHOD', 'Box', 'Do you want to charge Handling Fee Per Order or Per Box?', 6, 0, 'zen_cfg_select_option([\'Order\', \'Box\'], ', now())"
         );
 
         /*
@@ -1085,7 +1114,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
              VALUES 
-                ('USPS Domestic minimum Length', 'MODULE_SHIPPING_USPS_LENGTH', '8.625', 'The Minimum Length, Width and Height are used to determine shipping methods available for Domestic Shipping.<br>While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br>In most cases, these Minimums should never have to be changed.<br><br><strong>Enter the Domestic</strong><br />Minimum Length - default 8.625', 6, 0, now())"
+                ('USPS Domestic minimum Length', 'MODULE_SHIPPING_USPS_LENGTH', '8.625', 'The Minimum Length, Width and Height are used to determine shipping methods available for Domestic Shipping.<br>While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br>In most cases, these Minimums should never have to be changed.<br><br><strong>Enter the Domestic</strong><br>Minimum Length - default 8.625', 6, 0, now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
@@ -1122,25 +1151,25 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Enable USPS First-Class filter for US shipping', 'MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US', 'True', 'Do you want to enable the US First-Class filter to display only 1 First-Class shipping rate?', 6, 0, 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())"
+                ('Enable USPS First-Class filter for US shipping', 'MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US', 'True', 'Do you want to enable the US First-Class filter to display only 1 First-Class shipping rate?', 6, 0, 'zen_cfg_select_option([\'True\', \'False\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, .21875, 0.00, 0, .8125, 0.00, 0, .8125, 0.00, 0, .9375, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 15, 0.00, 0, 20, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br /><b><u>Minimum Weight (lbs)</u></b>first input field<br /><b><u>Maximum Weight (lbs):</u></b>second input field<br /><br />USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services(array(\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority MailRM Regional Rate Box A\', \'Priority MailRM Regional Rate Box B\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'), ', now())"
+                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, .21875, 0.00, 0, .8125, 0.00, 0, .8125, 0.00, 0, .9375, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 15, 0.00, 0, 20, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority MailRM Regional Rate Box A\', \'Priority MailRM Regional Rate Box B\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Extra Services (Domestic)', 'MODULE_SHIPPING_USPS_DMST_SERVICES', 'Certified MailRM, N, USPS TrackingTM Electronic, N, USPS TrackingTM, N, Insurance, N, Priority Mail Express Insurance, N, Priority Mail Insurance, N, Adult Signature Restricted Delivery, N, Adult Signature Required, N, Registered MailTM, N, Collect on Delivery, N, Return Receipt, N, Certificate of Mailing (Form 3665), N, Certificate of Mailing (Form 3817), N, Signature ConfirmationTM Electronic, N, Signature ConfirmationTM, N, Priority Mail Express 1030 AM Delivery, N, Certified MailRM Restricted Delivery, N, Certified MailRM Adult Signature Required, N, Certified MailRM Adult Signature Restricted Delivery, N, Signature ConfirmationTM Restricted Delivery, N, Signature ConfirmationTM Electronic Restricted Delivery, N, Collect on Delivery Restricted Delivery, N, Registered MailTM Restricted Delivery, N, Insurance Restricted Delivery, N, Insurance Restricted Delivery (Priority Mail Express), N, Insurance Restricted Delivery (Priority Mail), N', 'Included in postage rates.  Not shown to the customer.<br />WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices(array(\'Certified MailRM\', \'USPS TrackingTM Electronic\', \'USPS TrackingTM\', \'Insurance\', \'Priority Mail Express Insurance\', \'Priority Mail Insurance\', \'Adult Signature Restricted Delivery\', \'Adult Signature Required\', \'Registered MailTM\', \'Collect on Delivery\', \'Return Receipt\', \'Certificate of Mailing (Form 3665)\', \'Certificate of Mailing (Form 3817)\', \'Signature ConfirmationTM Electronic\', \'Signature ConfirmationTM\', \'Priority Mail Express 1030 AM Delivery\', \'Certified MailRM Restricted Delivery\', \'Certified MailRM Adult Signature Required\', \'Certified MailRM Adult Signature Restricted Delivery\', \'Signature ConfirmationTM Restricted Delivery\', \'Signature ConfirmationTM Electronic Restricted Delivery\', \'Collect on Delivery Restricted Delivery\', \'Registered MailTM Restricted Delivery\', \'Insurance Restricted Delivery\', \'Insurance Restricted Delivery (Priority Mail Express)\', \'Insurance Restricted Delivery (Priority Mail)\'), ', now())"
+                ('Extra Services (Domestic)', 'MODULE_SHIPPING_USPS_DMST_SERVICES', 'Certified MailRM, N, USPS TrackingTM Electronic, N, USPS TrackingTM, N, Insurance, N, Priority Mail Express Insurance, N, Priority Mail Insurance, N, Adult Signature Restricted Delivery, N, Adult Signature Required, N, Registered MailTM, N, Collect on Delivery, N, Return Receipt, N, Certificate of Mailing (Form 3665), N, Certificate of Mailing (Form 3817), N, Signature ConfirmationTM Electronic, N, Signature ConfirmationTM, N, Priority Mail Express 1030 AM Delivery, N, Certified MailRM Restricted Delivery, N, Certified MailRM Adult Signature Required, N, Certified MailRM Adult Signature Restricted Delivery, N, Signature ConfirmationTM Restricted Delivery, N, Signature ConfirmationTM Electronic Restricted Delivery, N, Collect on Delivery Restricted Delivery, N, Registered MailTM Restricted Delivery, N, Insurance Restricted Delivery, N, Insurance Restricted Delivery (Priority Mail Express), N, Insurance Restricted Delivery (Priority Mail), N', 'Included in postage rates.  Not shown to the customer.<br>WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices([\'Certified MailRM\', \'USPS TrackingTM Electronic\', \'USPS TrackingTM\', \'Insurance\', \'Priority Mail Express Insurance\', \'Priority Mail Insurance\', \'Adult Signature Restricted Delivery\', \'Adult Signature Required\', \'Registered MailTM\', \'Collect on Delivery\', \'Return Receipt\', \'Certificate of Mailing (Form 3665)\', \'Certificate of Mailing (Form 3817)\', \'Signature ConfirmationTM Electronic\', \'Signature ConfirmationTM\', \'Priority Mail Express 1030 AM Delivery\', \'Certified MailRM Restricted Delivery\', \'Certified MailRM Adult Signature Required\', \'Certified MailRM Adult Signature Restricted Delivery\', \'Signature ConfirmationTM Restricted Delivery\', \'Signature ConfirmationTM Electronic Restricted Delivery\', \'Collect on Delivery Restricted Delivery\', \'Registered MailTM Restricted Delivery\', \'Insurance Restricted Delivery\', \'Insurance Restricted Delivery (Priority Mail Express)\', \'Insurance Restricted Delivery (Priority Mail)\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Extra Services (International)', 'MODULE_SHIPPING_USPS_INTL_SERVICES', 'Registered Mail, N, Insurance, N, Return Receipt, N, Electronic USPS Delivery Confirmation International, N, Certificate of Mailing, N', 'Included in postage rates.  Not shown to the customer.<br />WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices(array(\'Registered Mail\', \'Insurance\', \'Return Receipt\', \'Electronic USPS Delivery Confirmation International\', \'Certificate of Mailing\'), ', now())"
+                ('Extra Services (International)', 'MODULE_SHIPPING_USPS_INTL_SERVICES', 'Registered Mail, N, Insurance, N, Return Receipt, N, Electronic USPS Delivery Confirmation International, N, Certificate of Mailing, N', 'Included in postage rates.  Not shown to the customer.<br>WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices([\'Registered Mail\', \'Insurance\', \'Return Receipt\', \'Electronic USPS Delivery Confirmation International\', \'Certificate of Mailing\'], ', now())"
         );
 
         // Special Services prices and availability will not be returned when Service = ALL or ONLINE
@@ -1148,7 +1177,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . " 
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
              VALUES 
-                ('Retail pricing or Online pricing?', 'MODULE_SHIPPING_USPS_RATE_TYPE', 'Online', 'Rates will be returned ONLY for methods available in this pricing type.  Applies to prices <u>and</u> add on services', 6, 0, 'zen_cfg_select_option(array(\'Retail\', \'Online\'), ', now())"
+                ('Retail pricing or Online pricing?', 'MODULE_SHIPPING_USPS_RATE_TYPE', 'Online', 'Rates will be returned ONLY for methods available in this pricing type.  Applies to prices <u>and</u> add on services', 6, 0, 'zen_cfg_select_option([\'Retail\', \'Online\'], ', now())"
         );
         $this->notify('NOTIFY_SHIPPING_USPS_INSTALLED');
     }
@@ -1170,7 +1199,7 @@ class usps extends base
      */
     public function keys()
     {
-        $keys_list = array(
+        $keys_list = [
             'MODULE_SHIPPING_USPS_VERSION', 
             'MODULE_SHIPPING_USPS_STATUS', 
             'MODULE_SHIPPING_USPS_TITLE_SIZE', 
@@ -1200,7 +1229,7 @@ class usps extends base
             'MODULE_SHIPPING_USPS_INTL_SERVICES', 
             'MODULE_SHIPPING_USPS_RATE_TYPE',
             'MODULE_SHIPPING_USPS_DEBUG_MODE',
-        );
+        ];
         $this->notify('NOTIFY_SHIPPING_USPS_KEYS', '', $keys_list);
         return $keys_list;
     }
@@ -1213,7 +1242,7 @@ class usps extends base
     protected function _getQuote()
     {
         global $order, $shipping_weight, $currencies;
-        
+
         $package_id = 'USPS DOMESTIC RETURNED: ' . "\n";
 
         // -----
@@ -1221,7 +1250,7 @@ class usps extends base
         // language file for additional information.
         //
         $usps_groundonly = '';
-        if (MODULE_SHIPPING_USPS_GROUNDONLY == 'force' || (MODULE_SHIPPING_USPS_GROUNDONLY == 'true' && $_SESSION['cart']->in_cart_check('products_groundonly', '1'))) {
+        if (MODULE_SHIPPING_USPS_GROUNDONLY === 'force' || (MODULE_SHIPPING_USPS_GROUNDONLY === 'true' && $_SESSION['cart']->in_cart_check('products_groundonly', '1'))) {
             $usps_groundonly = '<Content><ContentType>HAZMAT</ContentType></Content><GroundOnly>true</GroundOnly>';
         }
 
@@ -1232,19 +1261,19 @@ class usps extends base
         // are fragile.
         //
         $usps_fragile = '';
-        if (MODULE_SHIPPING_USPS_FRAGILE == 'force' || (MODULE_SHIPPING_USPS_FRAGILE == 'true' && $_SESSION['cart']->in_cart_check('products_fragile', '1'))) {
+        if (MODULE_SHIPPING_USPS_FRAGILE === 'force' || (MODULE_SHIPPING_USPS_FRAGILE === 'true' && $_SESSION['cart']->in_cart_check('products_fragile', '1'))) {
             $usps_fragile = '<Content><ContentType>Fragile</ContentType></Content>';
         }
 
-        if ((int)SHIPPING_ORIGIN_ZIP == 0) {
+        if ((int)SHIPPING_ORIGIN_ZIP === 0) {
             // no quotes obtained no 5 digit zip code origin set
-            return array(
+            return [
                 'module' => $this->title,
-                'error' => MODULE_SHIPPING_USPS_TEXT_ERROR . (MODULE_SHIPPING_USPS_SERVER == 'test' ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
-            );
+                'error' => MODULE_SHIPPING_USPS_TEXT_ERROR . ((MODULE_SHIPPING_USPS_SERVER == 'test') ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
+            ];
         }
 
-        $transreq = array();
+        $transreq = [];
 
         //@TODO
         // reduce order value by products not shipped
@@ -1260,6 +1289,7 @@ class usps extends base
 
         // reduce order value for virtual, downloads and Gift Certificates
         $this->shipment_value = ($order->info['subtotal'] > 0) ? $order->info['subtotal'] + $this->orders_tax : $_SESSION['cart']->total;
+
         global $uninsurable_value;
         $this->uninsurable_value = (isset($uninsurable_value)) ? (float)$uninsurable_value : 0;
         $this->insurable_value = $this->shipment_value - $this->uninsurable_value;
@@ -1270,7 +1300,7 @@ class usps extends base
         $this->quoteLogConfiguration();
 
         // US Domestic destinations
-        if ($order->delivery['country']['id'] == SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment) {
+        if ($order->delivery['country']['id'] === SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment === true) {
             // build special services for domestic
             // Some Special Services cannot work with others
             $special_services_domestic = $this->special_services(); // original
@@ -1286,11 +1316,13 @@ class usps extends base
             if ($ZipDestination == '') {
                 return -1;
             }
-            $request = '<RateV4Request USERID="' . MODULE_SHIPPING_USPS_USERID . '">' . '<Revision>2</Revision>';
+            $request =
+                '<RateV4Request USERID="' . MODULE_SHIPPING_USPS_USERID . '">' .
+                    '<Revision>2</Revision>';
             $package_count = 0;
             $ship_date = $this->zen_usps_shipdate();
 
-            foreach($this->typeCheckboxesSelected as $requested_type) {
+            foreach ($this->typeCheckboxesSelected as $requested_type) {
                 if (is_numeric($requested_type) || preg_match('#(GXG|International)#i' , $requested_type)) {
                     continue;
                 }
@@ -1305,52 +1337,52 @@ class usps extends base
                         continue;
                     } else {
                         // First-Class MailRM Letter\', \'First-Class MailRM Large Envelope\', \'First-Class Package Service - RetailTM
-                        $service = 'First Class';            
+                        $service = 'First Class';
                         // disable request for First-Class MailRM Letter at > .21875 and not Retail
-                        if (($requested_type == 'First-Class Mail Letter') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail') && ($shipping_weight <= .21875)) {
+                        if (($requested_type === 'First-Class Mail Letter') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail') && ($shipping_weight <= .21875)) {
                             $FirstClassMailType = 'LETTER';
-                        // disable request for First-Class Mail Large Envelope at > 13oz and not Retail  
-                        } elseif (($requested_type == 'First-Class Mail Large Envelope') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail') && ($shipping_weight <= 13/16)) {
+                        // disable request for First-Class Mail Large Envelope at > 13oz and not Retail
+                        } elseif (($requested_type === 'First-Class Mail Large Envelope') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail') && ($shipping_weight <= 13/16)) {
                             $FirstClassMailType = 'FLAT';
-                        // disable request for First-Class Package Service - RetailTM(new retail parcel designation) at > 13oz and not Retail               
-                        } elseif (($requested_type == 'First-Class Package Service - RetailTM') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Retail') && ($shipping_weight <= 13/16)) {
-                            $FirstClassMailType = 'PARCEL';    
+                        // disable request for First-Class Package Service - RetailTM(new retail parcel designation) at > 13oz and not Retail
+                        } elseif (($requested_type === 'First-Class Package Service - RetailTM') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail') && ($shipping_weight <= 13/16)) {
+                            $FirstClassMailType = 'PARCEL';
                         // disable request for First-ClassTM Package Service(existing commercial parcel designation) at > 1 lb and not Online(commercial pricing)
-                        } elseif (($requested_type == 'First-ClassTM Package Service') && (MODULE_SHIPPING_USPS_RATE_TYPE == 'Online') && ($shipping_weight <= 15/16)) {
+                        } elseif (($requested_type === 'First-ClassTM Package Service') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online') && ($shipping_weight <= 15/16)) {
                             $service = 'First Class Commercial';
                             $FirstClassMailType = 'PACKAGE SERVICE';
                         } else {
                             continue;
                         }
                     }
-                } elseif ($requested_type == 'Media Mail Parcel') {
+                } elseif ($requested_type === 'Media Mail Parcel') {
                     $service = 'MEDIA';
-                } elseif ($requested_type == 'USPS Retail GroundRM') {
+                } elseif ($requested_type === 'USPS Retail GroundRM') {
                     $service = 'PARCEL';
                 } elseif (preg_match('#Priority Mail(?! Express)#i', $requested_type)) {
                     $service = 'PRIORITY COMMERCIAL';
                     if ($requested_type === 'Priority Mail Flat RateRM Envelope' || $requested_type === 'Priority MailRM Flat Rate Envelope') {
                         $Container = 'FLAT RATE ENVELOPE';
-                    } elseif ($requested_type == 'Priority MailRM Legal Flat Rate Envelope') {
+                    } elseif ($requested_type === 'Priority MailRM Legal Flat Rate Envelope') {
                         $Container = 'LEGAL FLAT RATE ENVELOPE';
-                    } elseif ($requested_type == 'Priority MailRM Padded Flat Rate Envelope') {
+                    } elseif ($requested_type === 'Priority MailRM Padded Flat Rate Envelope') {
                         $Container = 'PADDED FLAT RATE ENVELOPE';
-                    } elseif ($requested_type == 'Priority MailRM Small Flat Rate Box') {
+                    } elseif ($requested_type === 'Priority MailRM Small Flat Rate Box') {
                         $Container = 'SM FLAT RATE BOX';
-                    } elseif ($requested_type == 'Priority MailRM Medium Flat Rate Box') {
+                    } elseif ($requested_type === 'Priority MailRM Medium Flat Rate Box') {
                         $Container = 'MD FLAT RATE BOX';
-                    } elseif ($requested_type == 'Priority MailRM Large Flat Rate Box') {
+                    } elseif ($requested_type === 'Priority MailRM Large Flat Rate Box') {
                         $Container = 'LG FLAT RATE BOX';
-                    } elseif ($requested_type == 'Priority MailRM Regional Rate Box A') {
+                    } elseif ($requested_type === 'Priority MailRM Regional Rate Box A') {
                         $Container = 'REGIONALRATEBOXA';
-                    } elseif ($requested_type == 'Priority MailRM Regional Rate Box B') {
+                    } elseif ($requested_type === 'Priority MailRM Regional Rate Box B') {
                         $Container = 'REGIONALRATEBOXB';
                     }
                 } elseif (stripos($requested_type, 'Priority Mail Express') !== false) {
                     $service = 'EXPRESS COMMERCIAL';
-                    if ($requested_type == 'Priority Mail ExpressRM Flat Rate Envelope') {
+                    if ($requested_type === 'Priority Mail ExpressRM Flat Rate Envelope') {
                         $Container = 'FLAT RATE ENVELOPE';
-                    } elseif ($requested_type == 'Priority Mail ExpressRM Legal Flat Rate Envelope') {
+                    } elseif ($requested_type === 'Priority Mail ExpressRM Legal Flat Rate Envelope') {
                         $Container = 'LEGAL FLAT RATE ENVELOPE';
                     }
                 } else {
@@ -1369,50 +1401,57 @@ class usps extends base
                 $girth = 108;
 
                 // turn on dimensions
-                $dimensions = '<Width>' . $width . '</Width>' .
-                              '<Length>' . $length . '</Length>' .
-                              '<Height>' . $height . '</Height>' .
-                              '<Girth>' . $girth . '</Girth>';
+                $dimensions =
+                    '<Width>' . $width . '</Width>' .
+                    '<Length>' . $length . '</Length>' .
+                    '<Height>' . $height . '</Height>' .
+                    '<Girth>' . $girth . '</Girth>';
 
                 // uncomment to force turn off dimensions
                 $dimensions = '';
 
-                $request .=  '<Package ID="' . $package_count . '">' .
-                     '<Service>' . $service . '</Service>' .
-                     ($FirstClassMailType != '' ? '<FirstClassMailType>' . $FirstClassMailType . '</FirstClassMailType>' : '') .
-                     '<ZipOrigination>' . SHIPPING_ORIGIN_ZIP . '</ZipOrigination>' .
-                     '<ZipDestination>' . $ZipDestination . '</ZipDestination>' .
-                     '<Pounds>' . $this->pounds . '</Pounds>' .
-                     '<Ounces>' . $this->ounces . '</Ounces>' .
-                     '<Container>' . $Container . '</Container>' .
-                     '<Size>REGULAR</Size>' .
-                    $dimensions .
-                    '<Value>' . number_format($this->insurable_value, 2, '.', '') . '</Value>' .
-                    $specialservices .
-                    $usps_groundonly .
-                    $usps_fragile .
-                    '<Machinable>' . ($this->machinable == 'True' ? 'TRUE' : 'FALSE') . '</Machinable>' .
+                $request .=
+                    '<Package ID="' . $package_count . '">' .
+                        '<Service>' . $service . '</Service>' .
+                        (($FirstClassMailType !== '') ? ('<FirstClassMailType>' . $FirstClassMailType . '</FirstClassMailType>') : '') .
+                        '<ZipOrigination>' . SHIPPING_ORIGIN_ZIP . '</ZipOrigination>' .
+                        '<ZipDestination>' . $ZipDestination . '</ZipDestination>' .
+                        '<Pounds>' . $this->pounds . '</Pounds>' .
+                        '<Ounces>' . $this->ounces . '</Ounces>' .
+                        '<Container>' . $Container . '</Container>' .
+                        '<Size>REGULAR</Size>' .
+                        $dimensions .
+                        '<Value>' . number_format($this->insurable_value, 2, '.', '') . '</Value>' .
+                        $specialservices .
+                        $usps_groundonly .
+                        $usps_fragile .
+                        '<Machinable>' . (($this->machinable === 'True') ? 'TRUE' : 'FALSE') . '</Machinable>' .
 //'<DropOffTime>23:59</DropOffTime>' .
-                    ($this->getTransitTime && $this->transitTimeCalculationMode == 'NEW' ? '<ShipDate>' . $ship_date . '</ShipDate>' : '') .
+                        (($this->getTransitTime && $this->transitTimeCalculationMode === 'NEW') ? ('<ShipDate>' . $ship_date . '</ShipDate>') : '') .
                     '</Package>';
 
-                $package_id .= 'Package ID returned: ' . $package_count . ' $requested_type: ' . $requested_type . ' $service: ' . $service . ' $Container: ' . $Container . "\n";
+                $package_id .=
+                    'Package ID returned: ' . $package_count .
+                    ' $requested_type: ' . $requested_type .
+                    ' $service: ' . $service .
+                    ' $Container: ' . $Container . "\n";
                 $package_count++;
 
                 // ask for Domestic transit times using old double-request method to individual USPS API for each shipping service requested
-                if ($this->getTransitTime && $this->transitTimeCalculationMode == 'OLD') {
-                    $transitreq  = 'USERID="' . MODULE_SHIPPING_USPS_USERID . '">' . '<OriginZip>' . SHIPPING_ORIGIN_ZIP . '</OriginZip>' . '<DestinationZip>' . $ZipDestination . '</DestinationZip>';
+                if ($this->getTransitTime && $this->transitTimeCalculationMode === 'OLD') {
+                    $transitreq = 'USERID="' . MODULE_SHIPPING_USPS_USERID . '">' . '<OriginZip>' . SHIPPING_ORIGIN_ZIP . '</OriginZip>' . '<DestinationZip>' . $ZipDestination . '</DestinationZip>';
                     switch ($service) {
                         case 'PRIORITY COMMERCIAL':
                         case 'PRIORITY': $transreq[$requested_type] = 'API=PriorityMail&XML=' . urlencode( '<PriorityMailRequest ' . $transitreq . '</PriorityMailRequest>');
-                        break;
+                            break;
                         case 'PARCEL':   $transreq[$requested_type] = 'API=StandardB&XML=' . urlencode( '<StandardBRequest ' . $transitreq . '</StandardBRequest>');
-                        break;
+                            break;
                         case 'First-Class Mail':$transreq[$requested_type] = 'API=FirstClassMail&XML=' . urlencode( '<FirstClassMailRequest ' . $transitreq . '</FirstClassMailRequest>');
-                        break;
+                            break;
                         case 'MEDIA':
-                        default:         $transreq[$requested_type] = '';
-                        break;
+                        default:
+                            $transreq[$requested_type] = '';
+                            break;
                     }
                 }
             }
@@ -1464,7 +1503,7 @@ class usps extends base
 
             // adjust <ValueOfContents> to not exceed $2499 per box
             global $shipping_num_boxes;
-            $max_usps_allowed_price = ($order->info['subtotal'] > 0 ? $order->info['subtotal'] + $this->orders_tax : $_SESSION['cart']->total);
+            $max_usps_allowed_price = ($order->info['subtotal'] > 0) ? ($order->info['subtotal'] + $this->orders_tax) : $_SESSION['cart']->total;
             $max_usps_allowed_price = ($max_usps_allowed_price / $shipping_num_boxes);
 
             // build extra services for international
@@ -1476,22 +1515,23 @@ class usps extends base
             // $max_usps_allowed_price - adjust <ValueOfContents> to not exceed $2499 per box
             $submission_value = ($this->insurable_value > $max_usps_allowed_price) ? $max_usps_allowed_price : $this->insurable_value;
 
-            $request =  '<IntlRateV2Request USERID="' . MODULE_SHIPPING_USPS_USERID . '">' .
-                  '<Revision>2</Revision>' .
-                  '<Package ID="0">' .
-                  '<Pounds>' . $this->pounds . '</Pounds>' .
-                  '<Ounces>' . $this->ounces . '</Ounces>' .
-                  '<MailType>All</MailType>' .
-                  '<GXG>' .
-                  '  <POBoxFlag>N</POBoxFlag>' .
-                  '  <GiftFlag>N</GiftFlag>' .
-                  '</GXG>' .
+            $request =
+                '<IntlRateV2Request USERID="' . MODULE_SHIPPING_USPS_USERID . '">' .
+                    '<Revision>2</Revision>' .
+                    '<Package ID="0">' .
+                        '<Pounds>' . $this->pounds . '</Pounds>' .
+                        '<Ounces>' . $this->ounces . '</Ounces>' .
+                        '<MailType>All</MailType>' .
+                        '<GXG>' .
+                            '<POBoxFlag>N</POBoxFlag>' .
+                            '<GiftFlag>N</GiftFlag>' .
+                        '</GXG>' .
 //                  '<ValueOfContents>' . number_format($order->info['subtotal'] > 0 ? $order->info['subtotal'] + $order->info['tax'] : $_SESSION['cart']->total, 2, '.', '') . '</ValueOfContents>' .
 //                  '<ValueOfContents>' . number_format(2499 > 0 ? 2499 : 2499, 2, '.', '') . '</ValueOfContents>' .
-                  '<ValueOfContents>' . number_format($submission_value, 2, '.', '') . '</ValueOfContents>' .
-                  '<Country>' . (empty($this->countries[$order->delivery['country']['iso_code_2']]) ? zen_get_country_name($order->delivery['country']['id']) : $this->countries[$order->delivery['country']['iso_code_2']]) . '</Country>' .
-                  '<Container>RECTANGULAR</Container>' .
-                  '<Size>REGULAR</Size>' .
+                        '<ValueOfContents>' . number_format($submission_value, 2, '.', '') . '</ValueOfContents>' .
+                        '<Country>' . (empty($this->countries[$order->delivery['country']['iso_code_2']]) ? zen_get_country_name($order->delivery['country']['id']) : $this->countries[$order->delivery['country']['iso_code_2']]) . '</Country>' .
+                        '<Container>RECTANGULAR</Container>' .
+                        '<Size>REGULAR</Size>' .
 // Small Flat Rate Box - 'maxLength'=>'8.625', 'maxWidth'=>'5.375','maxHeight'=>'1.625'
 // Global Express Guaranteed - Minimum 'minLength'=>'9.5', 'minHeight'=>'5.5' ; Maximum - 'maxLength'=>'46', 'maxWidth'=>'35', 'maxHeight'=>'46' and max. length plus girth combined 108"
 // NOTE: sizes for Small Flat Rate Box prevent Global Express Guaranteed
@@ -1503,20 +1543,21 @@ class usps extends base
 // MODULE_SHIPPING_USPS_LENGTH 8.625
 // MODULE_SHIPPING_USPS_WIDTH  5.375
 // MODULE_SHIPPING_USPS_HEIGHT 1.625
-                  '<Width>' . $width . '</Width>' .
-                  '<Length>' . $length . '</Length>' .
-                  '<Height>' . $height . '</Height>' .
-                  '<Girth>' . $girth . '</Girth>' .
+                        '<Width>' . $width . '</Width>' .
+                        '<Length>' . $length . '</Length>' .
+                        '<Height>' . $height . '</Height>' .
+                        '<Girth>' . $girth . '</Girth>' .
 
 //'<CommercialPlusFlag>N</CommercialPlusFlag>' .
-                  '<OriginZip>' . SHIPPING_ORIGIN_ZIP . '</OriginZip>' .
-                  // In the following line, changed N to Y to activate optional commercial base pricing for international services - 01/27/13 a.forever edit
-                  '<CommercialFlag>Y</CommercialFlag>' .
+                        '<OriginZip>' . SHIPPING_ORIGIN_ZIP . '</OriginZip>' .
+
+                        // In the following line, changed N to Y to activate optional commercial base pricing for international services - 01/27/13 a.forever edit
+                        '<CommercialFlag>Y</CommercialFlag>' .
 // '<AcceptanceDateTime>2015-05-30T13:15:00-06:00</AcceptanceDateTime>' .
 // '<DestinationPostalCode>' . $DestinationPostalCode . '</DestinationPostalCode>' .
-                    $extraservices .
-                  '</Package>' .
-                  '</IntlRateV2Request>';
+                        $extraservices .
+                    '</Package>' .
+                 '</IntlRateV2Request>';
 
             if ($this->getTransitTime) {
                 $transreq[$requested_type] = '';
@@ -1539,9 +1580,6 @@ class usps extends base
                 break;
             case 'test':
             default:
-    // 09-7-2014
-    //Secure APIs: https://stg-secure.shippingapis.com/ShippingApi.dll
-    //Non-secure APIs: http://stg-production.shippingapis.com/ShippingApi.dll
                 $usps_server = 'https://stg-secure.shippingapis.com';
                 $api_dll = 'ShippingApi.dll';
                 break;
@@ -1551,7 +1589,7 @@ class usps extends base
         // Send quote request via CURL
         global $request_type;
         $ch = curl_init();
-        $curl_options = array(
+        $curl_options = [
             CURLOPT_URL => $usps_server . '/' . $api_dll,
             CURLOPT_REFERER => ($request_type == 'SSL' ? HTTPS_SERVER . DIR_WS_HTTPS_CATALOG : HTTP_SERVER . DIR_WS_CATALOG),
             CURLOPT_FRESH_CONNECT => 1,
@@ -1562,9 +1600,9 @@ class usps extends base
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_USERAGENT => 'Zen Cart',
-        );
-        if (CURL_PROXY_REQUIRED == 'True') {
-            $curl_options[CURLOPT_HTTPPROXYTUNNEL] = !defined('CURL_PROXY_TUNNEL_FLAG') || strtoupper(CURL_PROXY_TUNNEL_FLAG) != 'FALSE';
+        ];
+        if (CURL_PROXY_REQUIRED === 'True') {
+            $curl_options[CURLOPT_HTTPPROXYTUNNEL] = !defined('CURL_PROXY_TUNNEL_FLAG') || strtoupper(CURL_PROXY_TUNNEL_FLAG) !== 'FALSE';
             $curl_options[CURLOPT_PROXYTYPE] = CURLPROXY_HTTP;
             $curl_options[CURLOPT_PROXY] = CURL_PROXY_SERVER_DETAILS;
         }
@@ -1581,11 +1619,11 @@ class usps extends base
         $body = curl_exec($ch);
         $this->commError = curl_error($ch);
         $this->commErrNo = curl_errno($ch);
-        $this->commInfo = @curl_getinfo($ch);
+        $this->commInfo = curl_getinfo($ch);
 
         // SUBMIT ADDITIONAL REQUESTS FOR DELIVERY TIME ESTIMATES
-        if ($this->transitTimeCalculationMode == 'OLD' && $this->getTransitTime && count($transreq) != 0) {
-            $transitResp = array();
+        if ($this->transitTimeCalculationMode === 'OLD' && $this->getTransitTime && count($transreq) !== 0) {
+            $transitResp = [];
             foreach ($transreq as $key => $value) {
                 $transitResp[$key] = '';
                 if ($value != '') {
@@ -1630,7 +1668,7 @@ class usps extends base
     {
         global $order, $shipping_weight, $currencies;
         
-        if (!$this->debug_enabled) {
+        if ($this->debug_enabled === false) {
             return;
         }
         $message  = 'USPS build: ' . MODULE_SHIPPING_USPS_VERSION . "\n\n";
@@ -1653,19 +1691,19 @@ class usps extends base
         $message .= 'Enable USPS First-Class filter for US shipping: ' . MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US . "\n";
         $message .= 'Sorts the returned quotes: ' . MODULE_SHIPPING_USPS_QUOTE_SORT . "\n\n";
 
-        $message .= 
-            'ZipOrigination: ' . ((int)SHIPPING_ORIGIN_ZIP == 0 ? '***WARNING: NO STORE 5 DIGIT ZIP CODE SET' : SHIPPING_ORIGIN_ZIP) . "\n" . 
-            'ZipDestination: ' . 
+        $message .=
+            'ZipOrigination: ' . ((int)SHIPPING_ORIGIN_ZIP === 0 ? '***WARNING: NO STORE 5 DIGIT ZIP CODE SET' : SHIPPING_ORIGIN_ZIP) . "\n" .
+            'ZipDestination: ' .
             (!empty($order->delivery['postcode']) ? 'Postcode: ' . $order->delivery['postcode'] : '') . 
-            (!empty($this->countries[$order->delivery['country']['iso_code_2']]) ? ' Country: ' . $this->countries[$order->delivery['country']['iso_code_2']] : '') . 
-            (!empty($order->delivery['city']) ? ' City: ' . $order->delivery['city'] : '') . 
+            (!empty($this->countries[$order->delivery['country']['iso_code_2']]) ? ' Country: ' . $this->countries[$order->delivery['country']['iso_code_2']] : '') .
+            (!empty($order->delivery['city']) ? ' City: ' . $order->delivery['city'] : '') .
             (!empty($order->delivery['state']) ? ' State: ' . $order->delivery['state'] : '') . "\n";
 
         $message .= 'Order SubTotal: ' . $currencies->format($order->info['subtotal']) . "\n";
         $message .= 'Order Total: ' . $currencies->format($this->shipment_value) . "\n";
         $message .= 'Uninsurable Portion: ' . $currencies->format($this->uninsurable_value) . "\n";
         $message .= 'Insurable Value: ' . $currencies->format($this->insurable_value) . "\n";
-        
+
         $this->uspsDebug($message);
     }
 
@@ -1678,22 +1716,22 @@ class usps extends base
     {
         global $order;
 
-        if (!$this->debug_enabled) {
+        if ($this->debug_enabled === false) {
             return;
         }
 
-        $message = 
-            '==================================' . "\n\n" . 
-            'SENT TO USPS:' . "\n\n" . 
+        $message =
+            '==================================' . "\n\n" .
+            'SENT TO USPS:' . "\n\n" .
             str_replace(
-                array(
+                [
                     '</Revision>',
                     '</Package>',
-                ),
-                array(
+                ],
+                [
                     '</Revision>' . PHP_EOL,
                     '</Package>' . PHP_EOL,
-                ),
+                ],
                 $request
             ) .
             "\n\n";
@@ -1710,7 +1748,7 @@ class usps extends base
         $services_domestic = 'Domestic Services Selected: ' . "\n";
         $services_international = 'International Services Selected: ' . "\n";
         // Domestic/US destination:
-        if ($this->is_us_shipment) {
+        if ($this->is_us_shipment === true) {
             $message .= 'Domestic Services Selected: ' . "\n";
             $options = explode(', ', MODULE_SHIPPING_USPS_DMST_SERVICES);
         } else {
@@ -1735,13 +1773,13 @@ class usps extends base
 
     protected function quoteLogXMLResponse($response)
     {
-        if (!$this->debug_enabled) {
+        if ($this->debug_enabled === false) {
             return;
         }
  
         $message = 'RESPONSE FROM USPS:' . "\n" . '==================================' . "\n";
         $response = str_replace(
-            array(
+            [
                 '<sup>&#8482;</sup>',
                 '<sup>&#174;</sup>',
                 '<Service ID',
@@ -1760,8 +1798,8 @@ class usps extends base
                 '</RateV4Response>',        //-US shipments only
                 '<Postage>',                //-International shipments only
                 '<ValueOfContents>',        //-International shipments only
-            ),
-            array(
+            ],
+            [
                 'TM', 
                 'RM',
                 "\n\n" . '<Service ID',
@@ -1780,7 +1818,7 @@ class usps extends base
                 "\n" . '</RateV4Response>', //-US shipments only
                 "\n" . '<Postage>',         //-International shipments only
                 "\n" . '<ValueOfContents>', //-International shipments only
-            ),
+            ],
             $response
         );
 
@@ -1810,9 +1848,9 @@ class usps extends base
                     break;
                 case (stripos($service, 'Priority Mail') !== false):
                     $time = $val['Days'];
-                    if ($time == '' || $time == 'No Data') {
+                    if ($time === '' || $time === 'No Data') {
                         $time = '2 - 3 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
-                    } elseif ($time == '1') {
+                    } elseif ($time === '1') {
                         $time .= ' ' . MODULE_SHIPPING_USPS_TEXT_DAY;
                     } else {
                         $time .= ' ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
@@ -1820,9 +1858,9 @@ class usps extends base
                     break;
                 case (stripos($service, 'USPS Retail Ground') !== false):
                     $time = $val['Days'];
-                    if ($time == '' || $time == 'No Data') {
+                    if ($time === '' || $time === 'No Data') {
                         $time = '4 - 7 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
-                    } elseif ($time == '1') {
+                    } elseif ($time === '1') {
                         $time .= ' ' . MODULE_SHIPPING_USPS_TEXT_DAY;
                     } else {
                         $time .= ' ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
@@ -1836,14 +1874,14 @@ class usps extends base
                     $time = '';
                     break;
             }
-            $this->transittime[$service] = $time == '' ? '' : (' (' . $time . ')');
+            $this->transittime[$service] = ($time === '') ? '' : (' (' . $time . ')');
  
             $this->uspsDebug(
-                'Transit Time' . "\n" . 
-                'Service' . $service . "\n" . 
-                'CommitmentTime (from USPS): ' . $val['CommitmentTime'] . "\n" . 
-                'Days(from USPS): ' . $val['Days'] . "\n" . 
-                '$time (calculated): ' . $time . "\n" . 
+                'Transit Time' . "\n" .
+                'Service' . $service . "\n" .
+                'CommitmentTime (from USPS): ' . $val['CommitmentTime'] . "\n" .
+                'Days(from USPS): ' . $val['Days'] . "\n" .
+                '$time (calculated): ' . $time . "\n" .
                 'Translation:' . $this->transittime[$service] . "\n\n"
             );
         }
@@ -1858,7 +1896,7 @@ class usps extends base
     protected function parseDomesticTransitTimeResults($Package, $service)
     {
         $time = !empty($Package['CommitmentName']) ? $Package['CommitmentName'] : '';
-        if ($time == '' || $this->transitTimeCalculationMode == 'CUSTOM') {
+        if ($time === '' || $this->transitTimeCalculationMode === 'CUSTOM') {
             switch (true) {
       /********************* CUSTOM START:  IF YOU HAVE CUSTOM TRANSIT TIMES ENTER THEM HERE ***************/
                 case (stripos($service, 'Priority Mail Express') !== false):
@@ -1884,9 +1922,19 @@ class usps extends base
             if (is_array($time)) {
                 $time = '';
             } else {
-                $time = str_replace('Weeks', MODULE_SHIPPING_USPS_TEXT_WEEKS, $time);
-                $time = str_replace('Days', MODULE_SHIPPING_USPS_TEXT_DAYS, $time);
-                $time = str_replace('Day', MODULE_SHIPPING_USPS_TEXT_DAY, $time);
+                $time = str_replace(
+                    [
+                        'Weeks',
+                        'Days',
+                        'Day',
+                    ],
+                    [
+                        MODULE_SHIPPING_USPS_TEXT_WEEKS,
+                        MODULE_SHIPPING_USPS_TEXT_DAYS,
+                        MODULE_SHIPPING_USPS_TEXT_DAY,
+                    ],
+                    $time
+                );
             }
         }
 
@@ -1897,12 +1945,19 @@ class usps extends base
         }
         // eof: not guaranteed on NOT Priority Mail Express
 
-        $this->transittime[$service] = $time == '' ? '' : ' (' . $time . ')';
+        $this->transittime[$service] = ($time === '') ? '' : (' (' . $time . ')');
 
         if (empty($Package['CommitmentName'])) {
             $Package['CommitmentName'] = 'Not Returned';
         }
-        $this->uspsDebug(' Transit Time (Domestic)' . "\nService:                    " . $service . "\nCommitmentName (from USPS): " . $Package['CommitmentName'] . "\n" . '$time (calculated):         ' . $time . "\nTranslation:               " . $this->transittime[$service] . "\n\n");
+        $this->uspsDebug(
+            ' Transit Time (Domestic)' .
+            "\nService:                    " . $service .
+            "\nCommitmentName (from USPS): " . $Package['CommitmentName'] . "\n" .
+            '$time (calculated):         ' . $time .
+            "\nTranslation:               " . $this->transittime[$service] .
+            "\n\n"
+        );
     }
 
     /**
@@ -1920,7 +1975,7 @@ class usps extends base
         }
 
         $time = isset($Package['SvcCommitments']) ? $Package['SvcCommitments'] : '';
-        if ($time == '' || $this->transitTimeCalculationMode == 'CUSTOM') {
+        if ($time === '' || $this->transitTimeCalculationMode === 'CUSTOM') {
             switch (true) {
             /********************* CUSTOM START:  IF YOU HAVE CUSTOM TRANSIT TIMES ENTER THEM HERE ***************/
                 case (stripos($service, 'Priority Mail Express') !== false):
@@ -1944,9 +1999,19 @@ class usps extends base
             /********************* CUSTOM END:  IF YOU HAVE CUSTOM TRANSIT TIMES ENTER THEM HERE ***************/
             }
         } else {
-            $time = str_replace('Weeks', MODULE_SHIPPING_USPS_TEXT_WEEKS, $time);
-            $time = str_replace('Days', MODULE_SHIPPING_USPS_TEXT_DAYS, $time);
-            $time = str_replace('Day', MODULE_SHIPPING_USPS_TEXT_DAY, $time);
+            $time = str_replace(
+                [
+                    'Weeks',
+                    'Days',
+                    'Day',
+                ],
+                [
+                    MODULE_SHIPPING_USPS_TEXT_WEEKS,
+                    MODULE_SHIPPING_USPS_TEXT_DAYS,
+                    MODULE_SHIPPING_USPS_TEXT_DAY,
+                ],
+                $time
+            );
         }
 
         // uncomment to remove extra text in times
@@ -1959,10 +2024,17 @@ class usps extends base
         }
         // eof: not guaranteed on NOT Priority Mail Express
 
-        $this->transittime[$service] = $time == '' ? '' : ' (' . $time . ')';
+        $this->transittime[$service] = ($time === '') ? '' : (' (' . $time . ')');
 
         // do logging if the file was opened earlier by the config switch
-        $this->uspsDebug(' Transit Time (Intl)' . "\nService: " . $service . "\nSvcCommitments (from USPS): " . $Package['SvcCommitments'] . "\n" . '$time (calculated): ' . $time . "\nTranslation: " . $this->transittime[$service] . "\n\n");
+        $this->uspsDebug(
+            ' Transit Time (Intl)' .
+            "\nService: " . $service .
+            "\nSvcCommitments (from USPS): " . $Package['SvcCommitments'] .
+            "\n" . '$time (calculated): ' . $time .
+            "\nTranslation: " . $this->transittime[$service] .
+            "\n\n"
+        );
     }
 
     /**
@@ -1974,7 +2046,7 @@ class usps extends base
      */
     protected function country_list()
     {
-        $list = array(
+        $list = [
             'AF' => 'Afghanistan',
             'AL' => 'Albania',
             'AX' => 'Aland Island (Finland)',
@@ -2206,8 +2278,8 @@ class usps extends base
             'GG' => 'Guernsey',
             'IM' => 'Isle of Man',
             'JE' => 'Jersey'
-        );
-        $this->notify('NOTIFY_SHIPPING_USPS_COUNTRY_LIST', array(), $list);
+        ];
+        $this->notify('NOTIFY_SHIPPING_USPS_COUNTRY_LIST', [], $list);
         return $list;
     }
 
@@ -2217,7 +2289,7 @@ class usps extends base
         $this->notify('NOTIFY_SHIPPING_USPS_TRANSLATION');
         global $order;
         $delivery_country = 'US';
-        if (SHIPPING_ORIGIN_COUNTRY == '223') {
+        if (SHIPPING_ORIGIN_COUNTRY === '223') {
             switch ($order->delivery['country']['iso_code_2']) {
                 case 'AS': // Samoa American
                 case 'GU': // Guam
@@ -2242,7 +2314,7 @@ class usps extends base
         // If the delivery country is the US, set a multi-use processing flag
         // to simplify the remaining code.
         //
-        $this->is_us_shipment = ($delivery_country == 'US');
+        $this->is_us_shipment = ($delivery_country === 'US');
         
         return $delivery_country;
     }
@@ -2267,13 +2339,42 @@ class usps extends base
     protected function clean_usps_marks($string)
     {
         // strip reg and trade symbols
-        $string = str_replace(array('&amp;lt;sup&amp;gt;&amp;#174;&amp;lt;/sup&amp;gt;', '&amp;lt;sup&amp;gt;&amp;#8482;&amp;lt;/sup&amp;gt;'), array('RM', 'TM'), htmlspecialchars($string));
+        $string = str_replace(
+            [
+                '&amp;lt;sup&amp;gt;&amp;#174;&amp;lt;/sup&amp;gt;',
+                '&amp;lt;sup&amp;gt;&amp;#8482;&amp;lt;/sup&amp;gt;',
+            ],
+            [
+                'RM',
+                'TM',
+            ],
+            htmlspecialchars($string)
+        );
 
         // shipdate info removed from names as it is contained in the shipping methods
         // refers to this field for Domestic: <CommitmentName>  or International: <SvcCommitments>
-        $string = str_replace(array('Mail 1-Day', 'Mail 2-Day', 'Mail 3-Day', 'Mail Military', 'Mail DPO'), 'Mail', $string);
-        $string = str_replace(array('Express 1-Day', 'Express 2-Day', 'Express 3-Day', 'Express Military', 'Express DPO'), 'Express', $string);
-
+        $string = str_replace(
+            [
+                'Mail 1-Day',
+                'Mail 2-Day',
+                'Mail 3-Day',
+                'Mail Military',
+                'Mail DPO',
+            ],
+            'Mail',
+            $string
+        );
+        $string = str_replace(
+            [
+                'Express 1-Day',
+                'Express 2-Day',
+                'Express 3-Day',
+                'Express Military',
+                'Express DPO',
+            ],
+            'Express',
+            $string
+        );
         return $string;
     }
 
@@ -2309,7 +2410,7 @@ $specialservicesdomestic: Certified MailRM USPS TrackingTM Insurance Priority Ma
 
 //@@TODO
 // Return Receipt Electronic 110 (16) missing
-        $options2codes = array(
+        $options2codes = [
             'Certified MailRM' => '105',                        // 0
             'Insurance' => '100',                               // 1
             'Registered MailTM' => '109',                       // 5, docs said 4
@@ -2337,12 +2438,12 @@ $specialservicesdomestic: Certified MailRM USPS TrackingTM Insurance Priority Ma
             'Insurance Restricted Delivery' => '177',
             'Insurance Restricted Delivery (Priority Mail Express)' => '178',
             'Insurance Restricted Delivery (Priority Mail)' => '179',
-        );
+        ];
         $serviceOptions = explode(', ', MODULE_SHIPPING_USPS_DMST_SERVICES); // domestic
         $specialservicesdomestic = '';
         foreach ($serviceOptions as $key => $val) {
             if (strlen($serviceOptions[$key]) > 1) {
-                if ($serviceOptions[$key+1] == 'C' || $serviceOptions[$key+1] == 'S' || $serviceOptions[$key+1] == 'Y') {
+                if ($serviceOptions[$key + 1] === 'C' || $serviceOptions[$key + 1] === 'S' || $serviceOptions[$key + 1] === 'Y') {
                     if (array_key_exists($serviceOptions[$key], $options2codes)) {
                         $specialservicesdomestic .= '  <SpecialService>' . $options2codes[$serviceOptions[$key]] . '</SpecialService>' . "\n";
                     }
@@ -2371,7 +2472,7 @@ USPS Extra Service Name ServiceID - Our Extra Service Name
         $extraserviceinternational = '';
         foreach ($iserviceOptions as $key => $val) {
             if (strlen($iserviceOptions[$key]) > 1) {
-                if ($iserviceOptions[$key+1] == 'C' || $iserviceOptions[$key+1] == 'S' || $iserviceOptions[$key+1] == 'Y') {
+                if ($iserviceOptions[$key + 1] === 'C' || $iserviceOptions[$key + 1] === 'S' || $iserviceOptions[$key + 1] === 'Y') {
                     switch ($iserviceOptions[$key]) {
                         case 'Registered Mail':
                             $extraserviceinternational .= '  <ExtraService>0</ExtraService>' . "\n";
@@ -2406,7 +2507,7 @@ USPS Extra Service Name ServiceID - Our Extra Service Name
     //
     protected function uspsDebug($message)
     {
-        if ($this->debug_enabled) {
+        if ($this->debug_enabled === true) {
             error_log(date('Y-m-d H:i:s') . ': ' . $message . PHP_EOL, 3, $this->debug_filename);
         }
     }
@@ -2416,29 +2517,100 @@ USPS Extra Service Name ServiceID - Our Extra Service Name
 function zen_cfg_usps_services($select_array, $key_value, $key = '')
 {
     $key_values = explode(', ', $key_value);
-    $name = (($key) ? 'configuration[' . $key . '][]' : 'configuration_value');
-    $string = '<b><div style="width:20px;float:left;text-align:center;">&nbsp;</div><div style="width:60px;float:left;text-align:center;">Min</div><div style="width:60px;float:left;text-align:center;">Max</div><div style="float:left;"></div><div style="width:60px;float:right;text-align:center;">Handling</div></b><div style="clear:both;"></div>';
-    $string_spacing = '<div><br /><br /><b>&nbsp;International Rates:</b><br /></div>' . $string;
+    $name = ($key) ? ('configuration[' . $key . '][]') : 'configuration_value';
+
+    $w20pxl = 'width:20px;float:left;text-align:center;';
+    $w60pxl = 'width:60px;float:left;text-align:center;';
+    $frc = 'float:right;text-align:center;';
+
+    $string =
+        '<b>' .
+            '<div style="' . $w20pxl . '">&nbsp;</div>' .
+            '<div style="' . $w60pxl . '">Min</div>' .
+            '<div style="' . $w60pxl . '">Max</div>' .
+            '<div style="float:left;"></div>' .
+            '<div style="' . $frc . '">Handling</div>' .
+        '</b>' .
+        '<div style="clear:both;"></div>';
+    $string_spacing = '<div><br><br><b>&nbsp;International Rates:</b><br></div>' . $string;
     $string_spacing_international = 0;
-    $string = '<div><br /><b>&nbsp;Domestic Rates:</b><br /></div>' . $string;
+    $string = '<div><br><b>&nbsp;Domestic Rates:</b><br></div>' . $string;
     for ($i = 0, $n = count($select_array); $i < $n; $i++) {
         if (stripos($select_array[$i], 'international') !== false) {
             $string_spacing_international++;
         }
-        if ($string_spacing_international == 1) {
+        if ($string_spacing_international === 1) {
             $string .= $string_spacing;
         }
 
         $string .= '<div id="' . $key . $i . '">';
-        $string .= '<div style="width:20px;float:left;text-align:center;">' . zen_draw_checkbox_field($name, $select_array[$i], (in_array($select_array[$i], $key_values) ? 'CHECKED' : '')) . '</div>';
-        if (in_array($select_array[$i], $key_values)) next($key_values);
-        $string .= '<div style="width:60px;float:left;text-align:center;">' . zen_draw_input_field($name, current($key_values), 'size="5"') . '</div>';
+        $string .=
+            '<div style="' . $w20pxl . '">' .
+                zen_draw_checkbox_field($name, $select_array[$i], (in_array($select_array[$i], $key_values) ? 'CHECKED' : '')) .
+            '</div>';
+        if (in_array($select_array[$i], $key_values)) {
+            next($key_values);
+        }
+        $string .=
+            '<div style="' . $w60pxl . '">' .
+                zen_draw_input_field($name, current($key_values), 'size="5"') .
+            '</div>';
         next($key_values);
-        $string .= '<div style="width:60px;float:left;text-align:center;">' . zen_draw_input_field($name, current($key_values), 'size="5"') . '</div>';
+
+        $string .=
+            '<div style="' . $w60pxl . '">' .
+                zen_draw_input_field($name, current($key_values), 'size="5"') .
+            '</div>';
         next($key_values);
-        $string .= '<div style="float:left;">' . preg_replace(array('/RM/', '/TM/', '/International/', '/Envelope/', '/ Mail/', '/Large/', '/Medium/', '/Small/', '/First/', '/Legal/', '/Padded/', '/Flat Rate/', '/Regional Rate/', '/Express Guaranteed /', '/Package\hService\h-\hRetail/', '/Package Service/' ), array('', '', 'Intl', 'Env', '', 'Lg.', 'Md.', 'Sm.', '1st', 'Leg.', 'Pad.', 'F/R', 'R/R', 'Exp Guar', 'Pkgs - Retail', 'Pkgs - Comm'), $select_array[$i]) . '</div>';
-        $string .= '<div style="width:60px;float:right;text-align:center;">$' . zen_draw_input_field($name, current($key_values), 'size="4"') . '</div>';
+
+        $string .=
+            '<div style="float:left;">' .
+                preg_replace(
+                    [
+                        '/RM/',
+                        '/TM/',
+                        '/International/',
+                        '/Envelope/',
+                        '/ Mail/',
+                        '/Large/',
+                        '/Medium/',
+                        '/Small/',
+                        '/First/',
+                        '/Legal/',
+                        '/Padded/',
+                        '/Flat Rate/',
+                        '/Regional Rate/',
+                        '/Express Guaranteed /',
+                        '/Package\hService\h-\hRetail/',
+                        '/Package Service/',
+                    ],
+                    [
+                        '',
+                        '',
+                        'Intl',
+                        'Env',
+                        '',
+                        'Lg.',
+                        'Md.',
+                        'Sm.',
+                        '1st',
+                        'Leg.',
+                        'Pad.',
+                        'F/R',
+                        'R/R',
+                        'Exp Guar',
+                        'Pkgs - Retail',
+                        'Pkgs - Comm',
+                    ],
+                    $select_array[$i]
+                ) .
+            '</div>';
+        $string .=
+            '<div style="'. $frc . '">$' .
+                zen_draw_input_field($name, current($key_values), 'size="4"') .
+            '</div>';
         next($key_values);
+
         $string .= '<div style="clear:both;"></div></div>';
     }
     return $string;
@@ -2447,20 +2619,48 @@ function zen_cfg_usps_services($select_array, $key_value, $key = '')
 function zen_cfg_usps_extraservices($select_array, $key_value, $key = '')
 {
     $key_values = explode(', ', $key_value);
-    $name = (($key) ? 'configuration[' . $key . '][]' : 'configuration_value');
-    $string = '<b><div style="width:20px;float:left;text-align:center;">N</div><div style="width:20px;float:left;text-align:center;">Y</div></b><div style="clear:both;"></div>';
+    $name = ($key) ? ('configuration[' . $key . '][]') : 'configuration_value';
+    $style = 'width:20px;float:left;text-align:center;';
+    $string =
+        '<b>' .
+            '<div style="' . $style . '">N</div>' .
+            '<div style="' . $style . '">Y</div>' .
+        '</b>' .
+        '<div style="clear:both;"></div>';
     for ($i = 0, $n = count($select_array); $i < $n; $i++) {
         $string .= zen_draw_hidden_field($name, $select_array[$i]);
         next($key_values);
+
         $string .= '<div id="' . $key . $i . '">';
-        $string .= '<div style="width:20px;float:left;text-align:center;"><input type="checkbox" name="' . $name . '" value="N" ' . (current($key_values) == 'N' || current($key_values) == '' ? 'CHECKED' : '') . ' id="N-'.$key.$i.'" onclick="if(this.checked==1)document.getElementById(\'Y-'.$key.$i.'\').checked=false;else document.getElementById(\'Y-'.$key.$i.'\').checked=true;"></div>';
-        $string .= '<div style="width:20px;float:left;text-align:center;"><input type="checkbox" name="' . $name . '" value="Y" ' . (current($key_values) == 'Y' ? 'CHECKED' : '') . ' id="Y-'.$key.$i.'" onclick="if(this.checked==1)document.getElementById(\'N-'.$key.$i.'\').checked=false;else document.getElementById(\'N-'.$key.$i.'\').checked=true;"></div>';
+        $string .=
+            '<div style="' . $style . '">' .
+                '<input type="checkbox" name="' . $name . '" value="N" ' . ((current($key_values) === 'N' || current($key_values) === '') ? 'checked' : '') . ' id="N-'. $key . $i . '" onclick="if(this.checked==1)document.getElementById(\'Y-'.$key.$i.'\').checked=false;else document.getElementById(\'Y-'.$key.$i.'\').checked=true;">' .
+            '</div>';
+        $string .=
+            '<div style="' . $style . '">' .
+                '<input type="checkbox" name="' . $name . '" value="Y" ' . ((current($key_values) === 'Y') ? 'checked' : '') . ' id="Y-' . $key . $i . '" onclick="if(this.checked==1)document.getElementById(\'N-' . $key . $i .'\').checked=false;else document.getElementById(\'N-' . $key . $i . '\').checked=true;">' .
+            '</div>';
         next($key_values);
-        $string .= str_replace(
-            array('Signature', 'without', 'Merchandise', 'TM', 'RM'), 
-            array('Sig', 'w/out', 'Merch.', '', ''), 
-            $select_array[$i]
-        ) . '<br />';
+
+        $string .=
+            str_replace(
+                [
+                    'Signature',
+                    'without',
+                    'Merchandise',
+                    'TM',
+                    'RM',
+                ],
+                [
+                    'Sig',
+                    'w/out',
+                    'Merch.',
+                    '',
+                    '',
+                ],
+                $select_array[$i]
+            ) .
+            '<br>';
         $string .= '<div style="clear:both;"></div></div>';
     }
     return $string;
