@@ -36,7 +36,8 @@ class usps extends base
    *
    * @var string
    */
-  public $code,
+    public
+        $code,
   /**
    * Shipping module display name
    *
@@ -60,13 +61,16 @@ class usps extends base
    *
    * @var boolean
    */
-        $enabled;
+        $enabled,
+        $sort_order;
+
   /**
    * Shipping module list of supported countries
    *
    * @var array
    */
-    protected $countries,
+    protected
+        $countries,
     /**
      *  use USPS translations for US shops
      *  @var string
@@ -91,7 +95,28 @@ class usps extends base
      * Insurable value for the quote.
      * @var float
      */
-        $insurable_value;
+        $insurable_value,
+
+        $tax_class,                     //- int
+        $tax_basis,                     //- string
+        $debug_enabled,                 //- bool
+        $debug_filename,                //- string
+        $getTransitTime,                //- bool
+        $shipping_cutoff_time,          //- string
+        $pounds,                        //- int
+        $ounces,                        //- float
+        $is_us_shipment,                //- bool
+        $machinable,                    //- string
+        $transitTimeCalculationMode,    //- string
+        $uspsQuote,                     //- ???
+        $quotes,                        //- array
+        $transittime,                   //- array
+        $_check,                        //- ???
+        $orders_tax,                    //- mixed
+        $shipment_value,                //- float
+        $commError,                     //- ???
+        $commErrNo,                     //- ???
+        $commInfo;                      //- ??
 
     // -----
     // Class constant to define the current module version.
@@ -519,13 +544,13 @@ class usps extends base
                     '<div id="iInfo">' . "\n" .
                     '  <div id="showInfo" class="ui-state-error" style="cursor:pointer; text-align:center;" onclick="$(\'#showInfo\').hide();$(\'#hideInfo, #Info\').show();">' . MODULE_SHIPPING_USPS_TEXT_INTL_SHOW . '</div>' . "\n" .
                     '  <div id="hideInfo" class="ui-state-error" style="cursor:pointer; text-align:center; display:none;" onclick="$(\'#hideInfo, #Info\').hide();$(\'#showInfo\').show();">' . MODULE_SHIPPING_USPS_TEXT_INTL_HIDE .'</div>' . "\n" .
-                    '  <div id="Info" class="ui-state-highlight" style="display:none; padding:10px; max-height:200px; overflow:auto;">' . 
-                    '    <b>Prohibitions:</b><br>' . nl2br($uspsQuote['Package']['Prohibitions']) . '<br><br>' . 
-                    '    <b>Restrictions:</b><br>' . nl2br($uspsQuote['Package']['Restrictions']) . '<br><br>' . 
-                    '    <b>Observations:</b><br>' . nl2br($uspsQuote['Package']['Observations']) . '<br><br>' . 
-                    '    <b>CustomsForms:</b><br>' . nl2br($uspsQuote['Package']['CustomsForms']) . '<br><br>' . 
-                    '    <b>ExpressMail:</b><br>' . nl2br($uspsQuote['Package']['ExpressMail']) . '<br><br>' . 
-                    '    <b>AreasServed:</b><br>' . nl2br($uspsQuote['Package']['AreasServed']) . '<br><br>' . 
+                    '  <div id="Info" class="ui-state-highlight" style="display:none; padding:10px; max-height:200px; overflow:auto;">' .
+                    '    <b>Prohibitions:</b><br>' . nl2br($uspsQuote['Package']['Prohibitions']) . '<br><br>' .
+                    '    <b>Restrictions:</b><br>' . nl2br($uspsQuote['Package']['Restrictions']) . '<br><br>' .
+                    '    <b>Observations:</b><br>' . nl2br($uspsQuote['Package']['Observations']) . '<br><br>' .
+                    '    <b>CustomsForms:</b><br>' . nl2br($uspsQuote['Package']['CustomsForms']) . '<br><br>' .
+                    '    <b>ExpressMail:</b><br>' . nl2br($uspsQuote['Package']['ExpressMail']) . '<br><br>' .
+                    '    <b>AreasServed:</b><br>' . nl2br($uspsQuote['Package']['AreasServed']) . '<br><br>' .
                     '    <b>AdditionalRestrictions:</b><br>' . nl2br($uspsQuote['Package']['AdditionalRestrictions']) .
                     '  </div>' . "\n" .
                     '</div>';
@@ -583,19 +608,17 @@ class usps extends base
                     foreach ($Package['SpecialServices']['SpecialService'] as $key => $val) {
                         // translate friendly names for Insurance Restricted Delivery 177, 178, 179, since USPS rebranded to remove all sense of explanations
                         if ($val['ServiceName'] === 'Insurance Restricted Delivery') {
-                            if ($val['ServiceID'] == 178) {
+                            if ($val['ServiceID'] === '178') {
                                 $val['ServiceName'] = 'Insurance Restricted Delivery (Priority Mail Express)';
-                            }
-                            if ($val['ServiceID'] == 179) {
+                            } elseif ($val['ServiceID'] === '179') {
                                 $val['ServiceName'] = 'Insurance Restricted Delivery (Priority Mail)';
                             }
                         }
                         // translate friendly names for insurance 100, 101, 125, since USPS rebranded to remove all sense of explanations
                         if ($val['ServiceName'] === 'Insurance') {
-                            if ($val['ServiceID'] == 125) {
+                            if ($val['ServiceID'] === '125') {
                                 $val['ServiceName'] = 'Priority Mail Insurance';
-                            }
-                            if ($val['ServiceID'] == 101) {
+                            } elseif ($val['ServiceID'] === '101') {
                                 $val['ServiceName'] = 'Priority Mail Express Insurance';
                             }
                         }
@@ -790,7 +813,7 @@ class usps extends base
             $cost_original = $cost;
             $cost = ($cost + $handling + $hiddenCost) * $shipping_num_boxes;
             // add handling fee per Box or per Order
-            $cost += (MODULE_SHIPPING_USPS_HANDLING_METHOD === 'Box') ? $usps_handling_fee * $shipping_num_boxes : $usps_handling_fee;
+            $cost += (MODULE_SHIPPING_USPS_HANDLING_METHOD === 'Box') ? ($usps_handling_fee * $shipping_num_boxes) : $usps_handling_fee;
 
             // set the output title display name back to correct format
             $title = str_replace(
@@ -819,7 +842,7 @@ class usps extends base
             }
 
             // Add transit time -- if the transit time feature is enabled, then the transittime variable will not be blank, so this adds it. If it's disabled, will be blank, so adding here will have no negative effect.
-            $title .= (isset($this->transittime[$type_rebuilt]) ? $this->transittime[$type_rebuilt] : '');
+            $title .= (isset($this->transittime[$type_rebuilt])) ? $this->transittime[$type_rebuilt] : '';
 
             // build USPS output for valid methods based on selected and weight limits
             if ($usps_shipping_weight <= $maxweight && $usps_shipping_weight > $minweight) {
@@ -936,7 +959,7 @@ class usps extends base
                     $show_box_weight = ' (' . $shipping_num_boxes . ' ' . TEXT_SHIPPING_BOXES . ')';
                     break;
                 case '2':
-                    $show_box_weight = ' (' . number_format($usps_shipping_weight * $shipping_num_boxes,2) . TEXT_SHIPPING_WEIGHT . ')';
+                    $show_box_weight = ' (' . number_format($usps_shipping_weight * $shipping_num_boxes, 2) . TEXT_SHIPPING_WEIGHT . ')';
                     break;
                 default:
                     $show_box_weight = ' (' . $shipping_num_boxes . ' ' . TEXT_SHIPPING_BOXES . ')  (' . $this->pounds . ' lbs, ' . $this->ounces . ' oz' . ')';
@@ -947,7 +970,7 @@ class usps extends base
             'id' => $this->code,
             'module' => $this->title . $show_box_weight,
             'methods' => $methods,
-            'tax' => $this->tax_class > 0 ? zen_get_tax_rate($this->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) : null,
+            'tax' => ($this->tax_class > 0) ? zen_get_tax_rate($this->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) : null,
         ];
 
         // add icon/message, if any
@@ -993,112 +1016,112 @@ class usps extends base
     {
         global $db;
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('USPS Version Date', 'MODULE_SHIPPING_USPS_VERSION', '" . self::USPS_CURRENT_VERSION . "', 'You have installed:', 6, 0, 'zen_cfg_select_option([\'" . self::USPS_CURRENT_VERSION . "\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
-             VALUES 
+             VALUES
                 ('Enable USPS Shipping', 'MODULE_SHIPPING_USPS_STATUS', 'True', 'Do you want to offer USPS shipping?', 6, 0, 'zen_cfg_select_option([\'True\', \'False\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
-             VALUES 
+             VALUES
                 ('Full Name or Short Name', 'MODULE_SHIPPING_USPS_TITLE_SIZE', 'Long', 'Do you want to use a Long or Short name for USPS shipping?', 6, 0, 'zen_cfg_select_option([\'Long\', \'Short\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added)
+             VALUES
                 ('Shipping Zone', 'MODULE_SHIPPING_USPS_ZONE', '0', 'If a zone is selected, only enable this shipping method for that zone.', 6, 0, 'zen_get_zone_class_title', 'zen_cfg_pull_down_zone_classes(', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('Sort Order', 'MODULE_SHIPPING_USPS_SORT_ORDER', '0', 'Sort order of display.', 6, 0, now())"
         );
 
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('Enter the USPS Web Tools User ID', 'MODULE_SHIPPING_USPS_USERID', 'NONE', 'Enter the USPS USERID assigned to you for Rate Quotes/ShippingAPI.', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Which server to use', 'MODULE_SHIPPING_USPS_SERVER', 'production', 'An account at USPS is needed to use the Production server', 6, 0, 'zen_cfg_select_option([\'test\', \'production\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('All Packages are Machinable?', 'MODULE_SHIPPING_USPS_MACHINABLE', 'False', 'Are all products shipped machinable based on C700 Package Services 2.0 Nonmachinable PARCEL POST USPS Rules and Regulations?<br><br><strong>Note: Nonmachinable packages will usually result in a higher Parcel Post Rate Charge.<br><br>Packages 35lbs or more, or less than 6 ounces (.375), will be overridden and set to False</strong>', 6, 0, 'zen_cfg_select_option([\'True\', \'False\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Quote Sort Order', 'MODULE_SHIPPING_USPS_QUOTE_SORT', 'Price-LowToHigh', 'Sorts the returned quotes using the service name Alphanumerically or by Price. Unsorted will give the order provided by USPS.', 6, 0, 'zen_cfg_select_option([\'Unsorted\',\'Alphabetical\', \'Price-LowToHigh\', \'Price-HighToLow\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Decimal Settings', 'MODULE_SHIPPING_USPS_DECIMALS', '3', 'Decimal Setting can be 1, 2 or 3. Sometimes International requires 2 decimals, based on Tare Rates or Product weights. Do you want to use 1, 2 or 3 decimals?', 6, 0, 'zen_cfg_select_option([\'1\', \'2\', \'3\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added)
+             VALUES
                 ('Tax Class', 'MODULE_SHIPPING_USPS_TAX_CLASS', '0', 'Use the following tax class on the shipping fee.', 6, 0, 'zen_get_tax_class_title', 'zen_cfg_pull_down_tax_classes(', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Tax Basis', 'MODULE_SHIPPING_USPS_TAX_BASIS', 'Shipping', 'On what basis is Shipping Tax calculated. Options are<br>Shipping - Based on customers Shipping Address<br>Billing Based on customers Billing address<br>Store - Based on Store address if Billing/Shipping Zone equals Store zone', 6, 0, 'zen_cfg_select_option([\'Shipping\', \'Billing\', \'Store\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('USPS Options', 'MODULE_SHIPPING_USPS_OPTIONS', '--none--', 'Select from the following the USPS options.<br>note: this adds a considerable delay in obtaining quotes.', '6', '16', 'zen_cfg_select_multioption([\'Display weight\', \'Display transit time\'], ',  now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('USPS Domestic Transit Time Calculation Mode', 'MODULE_SHIPPING_USPS_TRANSIT_TIME_CALCULATION_MODE', 'NEW', 'Select from the following the USPS options.<br>note: NEW and OLD will add additional time to quotes. CUSTOM allows your custom shipping days.', '6', '16', 'zen_cfg_select_option([\'CUSTOM\', \'NEW\', \'OLD\'], ',  now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Debug Mode', 'MODULE_SHIPPING_USPS_DEBUG_MODE', 'Off', 'Would you like to enable debug mode?  If set to <em>Logs</em>, a file will be written to the store\'s /logs directory on each USPS request.', 6, 0, 'zen_cfg_select_option([\'Off\', \'Logs\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('Handling Fee - US', 'MODULE_SHIPPING_USPS_HANDLING', '0', 'National Handling fee for this shipping method.', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('Handling Fee - International', 'MODULE_SHIPPING_USPS_HANDLING_INT', '0', 'International Handling fee for this shipping method.', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Handling Per Order or Per Box', 'MODULE_SHIPPING_USPS_HANDLING_METHOD', 'Box', 'Do you want to charge Handling Fee Per Order or Per Box?', 6, 0, 'zen_cfg_select_option([\'Order\', \'Box\'], ', now())"
         );
 
@@ -1111,72 +1134,72 @@ class usps extends base
         2021-05-05 K11a, now using the same defaults for international
         */
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('USPS Domestic minimum Length', 'MODULE_SHIPPING_USPS_LENGTH', '8.625', 'The Minimum Length, Width and Height are used to determine shipping methods available for Domestic Shipping.<br>While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br>In most cases, these Minimums should never have to be changed.<br><br><strong>Enter the Domestic</strong><br>Minimum Length - default 8.625', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('USPS minimum Width', 'MODULE_SHIPPING_USPS_WIDTH', '5.375', 'Enter the Minimum Width - default 5.375', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('USPS minimum Height', 'MODULE_SHIPPING_USPS_HEIGHT', '1.625', 'Enter the Minimum Height - default 1.625', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('USPS International minimum Length', 'MODULE_SHIPPING_USPS_LENGTH_INTL', '8.625', 'The Minimum Length, Width and Height are used to determine shipping methods available for International Shipping.<br>While dimensions are not supported at this time, the Minimums are sent to USPS for obtaining Rate Quotes.<br>In most cases, these Minimums should never have to be changed.<br><br><strong>Enter the International</strong><br>Minimum Length - default 8.625', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('USPS minimum Width', 'MODULE_SHIPPING_USPS_WIDTH_INTL', '5.375', 'Enter the Minimum Width - default 5.375', 6, 0, now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
                 ('USPS minimum Height', 'MODULE_SHIPPING_USPS_HEIGHT_INTL', '1.625', 'Enter the Minimum Height - default 1.625', 6, 0, now())"
         );
 
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Enable USPS First-Class filter for US shipping', 'MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US', 'True', 'Do you want to enable the US First-Class filter to display only 1 First-Class shipping rate?', 6, 0, 'zen_cfg_select_option([\'True\', \'False\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, .21875, 0.00, 0, .8125, 0.00, 0, .8125, 0.00, 0, .9375, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 15, 0.00, 0, 20, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority MailRM Regional Rate Box A\', \'Priority MailRM Regional Rate Box B\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Extra Services (Domestic)', 'MODULE_SHIPPING_USPS_DMST_SERVICES', 'Certified MailRM, N, USPS TrackingTM Electronic, N, USPS TrackingTM, N, Insurance, N, Priority Mail Express Insurance, N, Priority Mail Insurance, N, Adult Signature Restricted Delivery, N, Adult Signature Required, N, Registered MailTM, N, Collect on Delivery, N, Return Receipt, N, Certificate of Mailing (Form 3665), N, Certificate of Mailing (Form 3817), N, Signature ConfirmationTM Electronic, N, Signature ConfirmationTM, N, Priority Mail Express 1030 AM Delivery, N, Certified MailRM Restricted Delivery, N, Certified MailRM Adult Signature Required, N, Certified MailRM Adult Signature Restricted Delivery, N, Signature ConfirmationTM Restricted Delivery, N, Signature ConfirmationTM Electronic Restricted Delivery, N, Collect on Delivery Restricted Delivery, N, Registered MailTM Restricted Delivery, N, Insurance Restricted Delivery, N, Insurance Restricted Delivery (Priority Mail Express), N, Insurance Restricted Delivery (Priority Mail), N', 'Included in postage rates.  Not shown to the customer.<br>WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices([\'Certified MailRM\', \'USPS TrackingTM Electronic\', \'USPS TrackingTM\', \'Insurance\', \'Priority Mail Express Insurance\', \'Priority Mail Insurance\', \'Adult Signature Restricted Delivery\', \'Adult Signature Required\', \'Registered MailTM\', \'Collect on Delivery\', \'Return Receipt\', \'Certificate of Mailing (Form 3665)\', \'Certificate of Mailing (Form 3817)\', \'Signature ConfirmationTM Electronic\', \'Signature ConfirmationTM\', \'Priority Mail Express 1030 AM Delivery\', \'Certified MailRM Restricted Delivery\', \'Certified MailRM Adult Signature Required\', \'Certified MailRM Adult Signature Restricted Delivery\', \'Signature ConfirmationTM Restricted Delivery\', \'Signature ConfirmationTM Electronic Restricted Delivery\', \'Collect on Delivery Restricted Delivery\', \'Registered MailTM Restricted Delivery\', \'Insurance Restricted Delivery\', \'Insurance Restricted Delivery (Priority Mail Express)\', \'Insurance Restricted Delivery (Priority Mail)\'], ', now())"
         );
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Extra Services (International)', 'MODULE_SHIPPING_USPS_INTL_SERVICES', 'Registered Mail, N, Insurance, N, Return Receipt, N, Electronic USPS Delivery Confirmation International, N, Certificate of Mailing, N', 'Included in postage rates.  Not shown to the customer.<br>WARNING: Some services cannot work with other services.', 6, 0, 'zen_cfg_usps_extraservices([\'Registered Mail\', \'Insurance\', \'Return Receipt\', \'Electronic USPS Delivery Confirmation International\', \'Certificate of Mailing\'], ', now())"
         );
 
         // Special Services prices and availability will not be returned when Service = ALL or ONLINE
         $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . " 
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) 
-             VALUES 
+            "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
+             VALUES
                 ('Retail pricing or Online pricing?', 'MODULE_SHIPPING_USPS_RATE_TYPE', 'Online', 'Rates will be returned ONLY for methods available in this pricing type.  Applies to prices <u>and</u> add on services', 6, 0, 'zen_cfg_select_option([\'Retail\', \'Online\'], ', now())"
         );
         $this->notify('NOTIFY_SHIPPING_USPS_INSTALLED');
@@ -1200,33 +1223,33 @@ class usps extends base
     public function keys()
     {
         $keys_list = [
-            'MODULE_SHIPPING_USPS_VERSION', 
-            'MODULE_SHIPPING_USPS_STATUS', 
-            'MODULE_SHIPPING_USPS_TITLE_SIZE', 
-            'MODULE_SHIPPING_USPS_USERID', 
-            'MODULE_SHIPPING_USPS_SERVER', 
-            'MODULE_SHIPPING_USPS_QUOTE_SORT', 
-            'MODULE_SHIPPING_USPS_HANDLING', 
-            'MODULE_SHIPPING_USPS_HANDLING_INT', 
-            'MODULE_SHIPPING_USPS_HANDLING_METHOD', 
-            'MODULE_SHIPPING_USPS_DECIMALS', 
-            'MODULE_SHIPPING_USPS_TAX_CLASS', 
-            'MODULE_SHIPPING_USPS_TAX_BASIS', 
-            'MODULE_SHIPPING_USPS_ZONE', 
-            'MODULE_SHIPPING_USPS_SORT_ORDER', 
-            'MODULE_SHIPPING_USPS_MACHINABLE', 
+            'MODULE_SHIPPING_USPS_VERSION',
+            'MODULE_SHIPPING_USPS_STATUS',
+            'MODULE_SHIPPING_USPS_TITLE_SIZE',
+            'MODULE_SHIPPING_USPS_USERID',
+            'MODULE_SHIPPING_USPS_SERVER',
+            'MODULE_SHIPPING_USPS_QUOTE_SORT',
+            'MODULE_SHIPPING_USPS_HANDLING',
+            'MODULE_SHIPPING_USPS_HANDLING_INT',
+            'MODULE_SHIPPING_USPS_HANDLING_METHOD',
+            'MODULE_SHIPPING_USPS_DECIMALS',
+            'MODULE_SHIPPING_USPS_TAX_CLASS',
+            'MODULE_SHIPPING_USPS_TAX_BASIS',
+            'MODULE_SHIPPING_USPS_ZONE',
+            'MODULE_SHIPPING_USPS_SORT_ORDER',
+            'MODULE_SHIPPING_USPS_MACHINABLE',
             'MODULE_SHIPPING_USPS_OPTIONS', 
-            'MODULE_SHIPPING_USPS_TRANSIT_TIME_CALCULATION_MODE', 
-            'MODULE_SHIPPING_USPS_LENGTH', 
-            'MODULE_SHIPPING_USPS_WIDTH', 
-            'MODULE_SHIPPING_USPS_HEIGHT', 
-            'MODULE_SHIPPING_USPS_LENGTH_INTL', 
-            'MODULE_SHIPPING_USPS_WIDTH_INTL', 
-            'MODULE_SHIPPING_USPS_HEIGHT_INTL', 
-            'MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US', 
-            'MODULE_SHIPPING_USPS_TYPES', 
-            'MODULE_SHIPPING_USPS_DMST_SERVICES', 
-            'MODULE_SHIPPING_USPS_INTL_SERVICES', 
+            'MODULE_SHIPPING_USPS_TRANSIT_TIME_CALCULATION_MODE',
+            'MODULE_SHIPPING_USPS_LENGTH',
+            'MODULE_SHIPPING_USPS_WIDTH',
+            'MODULE_SHIPPING_USPS_HEIGHT',
+            'MODULE_SHIPPING_USPS_LENGTH_INTL',
+            'MODULE_SHIPPING_USPS_WIDTH_INTL',
+            'MODULE_SHIPPING_USPS_HEIGHT_INTL',
+            'MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US',
+            'MODULE_SHIPPING_USPS_TYPES',
+            'MODULE_SHIPPING_USPS_DMST_SERVICES',
+            'MODULE_SHIPPING_USPS_INTL_SERVICES',
             'MODULE_SHIPPING_USPS_RATE_TYPE',
             'MODULE_SHIPPING_USPS_DEBUG_MODE',
         ];
@@ -1288,7 +1311,7 @@ class usps extends base
         $this->orders_tax = (!isset($order->info['tax'])) ? 0 : $order->info['tax'];
 
         // reduce order value for virtual, downloads and Gift Certificates
-        $this->shipment_value = ($order->info['subtotal'] > 0) ? $order->info['subtotal'] + $this->orders_tax : $_SESSION['cart']->total;
+        $this->shipment_value = ($order->info['subtotal'] > 0) ? ($order->info['subtotal'] + $this->orders_tax) : $_SESSION['cart']->total;
 
         global $uninsurable_value;
         $this->uninsurable_value = (isset($uninsurable_value)) ? (float)$uninsurable_value : 0;
@@ -1313,7 +1336,7 @@ class usps extends base
                 $order->delivery['postcode'] = '';
             }
             $ZipDestination = substr(trim($order->delivery['postcode']), 0, 5);
-            if ($ZipDestination == '') {
+            if ($ZipDestination === '') {
                 return -1;
             }
             $request =
@@ -1526,8 +1549,6 @@ class usps extends base
                             '<POBoxFlag>N</POBoxFlag>' .
                             '<GiftFlag>N</GiftFlag>' .
                         '</GXG>' .
-//                  '<ValueOfContents>' . number_format($order->info['subtotal'] > 0 ? $order->info['subtotal'] + $order->info['tax'] : $_SESSION['cart']->total, 2, '.', '') . '</ValueOfContents>' .
-//                  '<ValueOfContents>' . number_format(2499 > 0 ? 2499 : 2499, 2, '.', '') . '</ValueOfContents>' .
                         '<ValueOfContents>' . number_format($submission_value, 2, '.', '') . '</ValueOfContents>' .
                         '<Country>' . (empty($this->countries[$order->delivery['country']['iso_code_2']]) ? zen_get_country_name($order->delivery['country']['id']) : $this->countries[$order->delivery['country']['iso_code_2']]) . '</Country>' .
                         '<Container>RECTANGULAR</Container>' .
@@ -1591,7 +1612,7 @@ class usps extends base
         $ch = curl_init();
         $curl_options = [
             CURLOPT_URL => $usps_server . '/' . $api_dll,
-            CURLOPT_REFERER => ($request_type == 'SSL' ? HTTPS_SERVER . DIR_WS_HTTPS_CATALOG : HTTP_SERVER . DIR_WS_CATALOG),
+            CURLOPT_REFERER => ($request_type == 'SSL') ? (HTTPS_SERVER . DIR_WS_HTTPS_CATALOG) : (HTTP_SERVER . DIR_WS_CATALOG),
             CURLOPT_FRESH_CONNECT => 1,
             CURLOPT_HEADER => 0,
             CURLOPT_VERBOSE => 0,
@@ -1667,7 +1688,7 @@ class usps extends base
     protected function quoteLogConfiguration()
     {
         global $order, $shipping_weight, $currencies;
-        
+
         if ($this->debug_enabled === false) {
             return;
         }

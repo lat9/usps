@@ -1,6 +1,6 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.5.4 through 1.5.7
+ * USPS Module for Zen Cart v1.5.7 through 1.5.8
  * USPS RateV4 Intl RateV2 - September 24, 2020 Version K11
 
  * Prices from: Sept 16, 2017
@@ -16,6 +16,7 @@
  * @version $Id: usps.php 2017-09-16 ajeh - tflmike Version K10 $
  * @version $Id: usps.php 2020-09-24 lat9 Version K11 $
  * @version $Id: usps.php 2021-07-14 lat9 Version K11b $
+ * @version $Id: usps.php 2023-01-26 lat9 Version K11f $
  */
 define('MODULE_SHIPPING_USPS_TEXT_TITLE', 'United States Postal Service');
 define('MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE', 'USPS');
@@ -40,13 +41,17 @@ define('MODULE_SHIPPING_USPS_TEXT_INTL_HIDE', 'Hide Shipping Regulations');
 // For international orders, should the USPS shipping regulations for the ship-to country be displayed
 // to the customer?  Choose 'True' to display the regulations or 'False' (the default) otherwise.
 //
-if (!defined('MODULE_SHIPPING_USPS_REGULATIONS')) define('MODULE_SHIPPING_USPS_REGULATIONS', 'True');      //-Either 'False' (default) or 'True'
+if (!defined('MODULE_SHIPPING_USPS_REGULATIONS')) {
+    define('MODULE_SHIPPING_USPS_REGULATIONS', 'True');      //-Either 'False' (default) or 'True'
+}
 
 // -----
 // Identifies the shipping cut-off time for the store, in the format 'HHMM', in the range '1200' to '2300'.
 // Out-of-range values will be reset to '1400' (the default).
 //
-if (!defined('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF')) define('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF', '1400');
+if (!defined('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF')) {
+    define('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF', '1400');
+}
 
 // -----
 // Identifies whether/not a check for the database field 'products::products_groundonly' should be made.  If any products
@@ -57,7 +62,9 @@ if (!defined('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF')) define('MODULE_SHIPPING_US
 // NOTE: Setting this value to 'true' if that field doesn't exist in your database will result in a fatal MySQL error
 // when the quote-request is made.
 //
-if (!defined('MODULE_SHIPPING_USPS_GROUNDONLY')) define('MODULE_SHIPPING_USPS_GROUNDONLY', 'false');
+if (!defined('MODULE_SHIPPING_USPS_GROUNDONLY')) {
+    define('MODULE_SHIPPING_USPS_GROUNDONLY', 'false');
+}
 
 // -----
 // Identifies whether/not a check for the database field 'products::products_fragile' should be made.  If any products
@@ -67,4 +74,6 @@ if (!defined('MODULE_SHIPPING_USPS_GROUNDONLY')) define('MODULE_SHIPPING_USPS_GR
 // NOTE: Setting this value to 'true' if that field doesn't exist in your database will result in a fatal MySQL error
 // when the quote-request is made.
 //
-if (!defined('MODULE_SHIPPING_USPS_FRAGILE')) define('MODULE_SHIPPING_USPS_FRAGILE', 'false');
+if (!defined('MODULE_SHIPPING_USPS_FRAGILE')) {
+    define('MODULE_SHIPPING_USPS_FRAGILE', 'false');
+}

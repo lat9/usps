@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2021-08-07 Version K11e
+USPS RateV4 Intl RateV2 - 2023-mm-dd Version K11f
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -54,6 +54,8 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2023-01-27 by lat9 2023-mm-dd Version K11f
+    - Refactoring and declaring all class variables for use under PHP 7.4 and later
 2022-08-07 by lat9/proseLA 2022-08-07 Version K11e
     - Auto-update not recognized for K11c -> K11d version, due to version name misspelling
 2022-07-30 by lat9/proseLA 2022-07-30 Version K11d
@@ -138,11 +140,11 @@ To install or update this code ...
     NOTE: using weight minimum/maximum is usually a better method to control this
 10. USPS Options for the Display Transit Times may slow down quotes
 11. USPS Domestic Transit Time Calculation Mode
-    a) NEW: uses whatever the new option "ShipDate" returns. This is something new added by USPS on July 28, and the way this Version J5 module implements it causes it to 
-       ask USPS to quote based on "ship this item today if quoting before 2pm, else ship tomorrow". 
+    a) NEW: uses whatever the new option "ShipDate" returns. This is something new added by USPS on July 28, and the way this Version J5 module implements it causes it to
+       ask USPS to quote based on "ship this item today if quoting before 2pm, else ship tomorrow".
        This may affect the number of days you see, and maybe that's why you were confused about the meaning of this "NEW" option.
 
-    b) OLD: uses the older legacy APIs (multiple separate calls to each Service) to get dates. This is how it worked before July 28. 
+    b) OLD: uses the older legacy APIs (multiple separate calls to each Service) to get dates. This is how it worked before July 28.
        At this point there is no indicator whether this option will still be supported by USPS for much longer.
 
        NOTE: If blank from USPS, uses CUSTOM values from parseDomesticLegacyAPITransitTimeResults() in usps.php
