@@ -121,7 +121,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2022-08-07 K11e';
+    const USPS_CURRENT_VERSION = '2023-01-29 K11f';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -452,11 +452,17 @@ class usps extends base
                     AND zone_country_id = " . (int)$order->delivery['country']['id'] . " 
                   ORDER BY zone_id ASC"
             );
-            foreach ($check as $next_zone) {
-                if ($next_zone['zone_id'] < 1 || $next_zone['zone_id'] === $order->delivery['zone_id']) {
+
+            // -----
+            // NOTE: Using the legacy form of traversing the $db output; will be updated once support
+            // is dropped for Zen Cart versions prior to v1.5.7!
+            //
+            while (!$check->EOF) {
+                if ($check->fields['zone_id'] < 1 || $check->fields['zone_id'] === $order->delivery['zone_id']) {
                     $check_flag = true;
                     break;
                 }
+                $check->MoveNext();
             }
 
             if ($check_flag == false) {

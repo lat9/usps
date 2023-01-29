@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2023-mm-dd Version K11f
+USPS RateV4 Intl RateV2 - 2023-01-29 Version K11f
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -54,7 +54,7 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
-2023-01-29 by lat9 2023-mm-dd Version K11f
+2023-01-29 by lat9 2023-01-29 Version K11f
     - Refactoring and declaring all class variables for use under PHP 7.4 and later
     - 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' no longer supported
        by USPS.  Remove from current configuration on auto-update; don't include in initial configuration
@@ -62,19 +62,25 @@ To install or update this code ...
     - Country full-spelling name changed from 'Turkey' to 'Türkiye'.
     - Correct PHP Warning when US-destined USPS quote returns no values.
     - Add a notification to enable an observer to modify the overall handling fee for the current order.
+
 2022-08-07 by lat9/proseLA 2022-08-07 Version K11e
     - Auto-update not recognized for K11c -> K11d version, due to version name misspelling
+
 2022-07-30 by lat9/proseLA 2022-07-30 Version K11d
     - CommitmentName fields for some methods returning as an empty array and resulting in debug-logs being generated.
+
 2022-07-12 by lat9 2022-07-12 Version K11c
     - USPS branding has changed for "Priority Mail Express International", too; no quotes being returned.
+
 2022-07-10 by lat9 2022-07-10 Version K11b
     - Enabling 'soft' configuration settings to be used as overrides.
     - Correcting PHP warnings when no quote is returned from USPS.
     - USPS branding has changed for "Priority Mail" and "Priority Mail Express" domestic shipments; no quotes being returned.
+
 2021-05-05 by lat9 2021-05-05 Version K11a
     - Adding notification to enable store-specific customizations for methods/prices offered (see https://github.com/lat9/usps for additional documentation).
     - Modify default international shipping 'base' dimensions to enable the offering of the International Small Flat-Rate Box method.
+
 2020-10-21 by lat9 2020-09-24 Version K11
     - Restructuring to prevent PHP notices and warnings.
       - Re-factored to use now-current code styling.
