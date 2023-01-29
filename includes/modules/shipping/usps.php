@@ -628,11 +628,15 @@ class usps extends base
         }
 
         if ($this->is_us_shipment === true) {
-            $PackageSize = count($uspsQuote['Package']);
-            // if object has no legitimate children, turn it into a firstborn:
-            if (isset($uspsQuote['Package']['ZipDestination']) && !isset($uspsQuote['Package'][0]['Postage'])) {
-                $uspsQuote['Package'][] = $uspsQuote['Package'];
-                $PackageSize = 1;
+            if (!isset($uspsQuote['Package']) || !is_array($uspsQuote['Package'])) {
+                $PackageSize = 0;
+            } else {
+                $PackageSize = count($uspsQuote['Package']);
+                // if object has no legitimate children, turn it into a firstborn:
+                if (isset($uspsQuote['Package']['ZipDestination']) && !isset($uspsQuote['Package'][0]['Postage'])) {
+                    $uspsQuote['Package'][] = $uspsQuote['Package'];
+                    $PackageSize = 1;
+                }
             }
         } else {
             $PackageSize = count($uspsQuote['Package']['Service']);
