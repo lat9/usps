@@ -879,6 +879,11 @@ class usps extends base
                 $usps_handling_fee = MODULE_SHIPPING_USPS_HANDLING_INT;
             }
 
+            // -----
+            // Give an observer the opportunity to modify the overall USPS handling fee for the order.
+            //
+            $this->notify('NOTIFY_SHIPPING_USPS_AFTER_HANDLING', [], $order, $usps_shipping_weight, $shipping_num_boxes, $usps_handling_fee);
+
             // COST
             // clean out invalid characters
             $cost = preg_replace('/[^0-9.]/', '',  $cost);

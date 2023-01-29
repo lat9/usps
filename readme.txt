@@ -61,6 +61,7 @@ To install or update this code ...
        on fresh install.
     - Country full-spelling name changed from 'Turkey' to 'Türkiye'.
     - Correct PHP Warning when US-destined USPS quote returns no values.
+    - Add a notification to enable an observer to modify the overall handling fee for the current order.
 2022-08-07 by lat9/proseLA 2022-08-07 Version K11e
     - Auto-update not recognized for K11c -> K11d version, due to version name misspelling
 2022-07-30 by lat9/proseLA 2022-07-30 Version K11d
