@@ -1,6 +1,6 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.5.4 through 1.5.8
+ * USPS Module for Zen Cart v1.5.6 through 1.5.8
  * USPS RateV4 Intl RateV2 - Jamuary 29, 2023 K11f
 
  * Prices from: Sept 16, 2017

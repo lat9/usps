@@ -1,6 +1,6 @@
 # USPS Shipping for Zen Cart
 
-This repository is the home of the USPS Shipping Module, supporting Zen Cart versions 1.5.6 through 1.5.7.
+This repository is the home of the USPS Shipping Module, supporting Zen Cart versions 1.5.6 through 1.5.8.
 
 USPS interface API documentation: https://www.usps.com/business/web-tools-apis/documentation-updates.htm
 
@@ -10,7 +10,7 @@ Zen Cart support-thread link: https://www.zen-cart.com/showthread.php?227284-USP
 
 --------------------
 
-## Current Version: 2022-08-07 K11e
+## Current Version: 2023-01-29 K11f
 
 Starting with version `2022-07-10 K11b`, the module will attempt to automatically update its settings so that you no longer need to remove and re-install the module when a _small_ update is needed.
 
