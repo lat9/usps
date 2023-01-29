@@ -1,7 +1,7 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.5.4 through 1.5.7d
- * USPS RateV4 Intl RateV2 - July 18, 2020 Version K11d
+ * USPS Module for Zen Cart v1.5.4 through 1.5.8
+ * USPS RateV4 Intl RateV2 - Jamuary 29, 2023 K11f
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -20,7 +20,7 @@
  * @version $Id: usps.php 2022-07-12 lat9 Version K11c $
  * @version $Id: usps.php 2022-07-30 lat9 Version K11d $
  * @version $Id: usps.php 2022-08-07 lat9 Version K11e $
- * @version $Id: usps.php 2023-01-26 lat9 Version K11f $
+ * @version $Id: usps.php 2023-01-29 lat9 Version K11f $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -258,9 +258,79 @@ class usps extends base
                         );
 
                     case (MODULE_SHIPPING_USPS_VERSION === '2022-07-12 K11c'):          //- Fall-through from above to continue checks
-
                     case (MODULE_SHIPPING_USPS_VERSION === '2022-07-30 K11d'):          //- Fall-through from above to continue checks
-
+                    case (MODULE_SHIPPING_USPS_VERSION === '2022-08-07 K11e'):          //- Fall-through from above to continue checks
+                        // -----
+                        // 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' methods are no longer
+                        // supported by USPS; remove them from the configured shipping types and update the parameters for that
+                        // setting's 'set_function'.
+                        //
+                        // The configured shipping types are laid out as an imploded string of a numerically-indexed array, either 3 or 4 elements
+                        // per selection.
+                        //
+                        // - If the current element matches one of the shipping types, implying that it is currently selected, then
+                        //   the type's entry has 4 elements:
+                        //   - The name, minimum weight, maximum weight and handling fee
+                        // - Otherwise, the associated shipping type is *not* selected and the type's entry has 3 elements:
+                        //   - The minimum weight, maximum weight and handling fee.
+                        //
+                        // See the zen_cfg_usps_services function at the bottom of this module for admin-level configuration processing.
+                        //
+                        $usps_configured_types = explode(', ', MODULE_SHIPPING_USPS_TYPES);
+                        $usps_shipping_types_old = [
+                            'First-Class Mail Letter',
+                            'First-Class Mail Large Envelope',
+                            'First-Class Package Service - RetailTM',
+                            'First-ClassTM Package Service',
+                            'Media Mail Parcel',
+                            'USPS Retail GroundRM',
+                            'Priority MailRM',
+                            'Priority MailRM Flat Rate Envelope',
+                            'Priority MailRM Legal Flat Rate Envelope',
+                            'Priority MailRM Padded Flat Rate Envelope',
+                            'Priority MailRM Small Flat Rate Box',
+                            'Priority MailRM Medium Flat Rate Box',
+                            'Priority MailRM Large Flat Rate Box',
+                            'Priority MailRM Regional Rate Box A',
+                            'Priority MailRM Regional Rate Box B',
+                            'Priority Mail ExpressRM',
+                            'Priority Mail ExpressRM Flat Rate Envelope',
+                            'Priority Mail ExpressRM Legal Flat Rate Envelope',
+                            'First-Class MailRM International Letter',
+                            'First-Class MailRM International Large Envelope',
+                            'First-Class Package International ServiceTM',
+                            'Priority Mail InternationalRM',
+                            'Priority Mail InternationalRM Flat Rate Envelope',
+                            'Priority Mail InternationalRM Small Flat Rate Box',
+                            'Priority Mail InternationalRM Medium Flat Rate Box',
+                            'Priority Mail InternationalRM Large Flat Rate Box',
+                            'Priority Mail Express InternationalTM',
+                            'Priority Mail Express InternationalTM Flat Rate Envelope',
+                            'USPS GXGTM Envelopes',
+                            'Global Express GuaranteedRM (GXG)',
+                        ];
+                        $usps_configured_types = explode(', ', MODULE_SHIPPING_USPS_TYPES);
+                        $configured_indices_to_remove = [];
+                        for ($sto = 0, $sto_cnt = count($usps_shipping_types_old), $ct = 0; $sto < $sto_cnt; $sto++) {
+                            $current_shipping_type = $usps_shipping_types_old[$sto];
+                            $item_entries = ($usps_configured_types[$ct] === $current_shipping_type) ? 4 : 3;
+                            if ($current_shipping_type === 'Priority MailRM Regional Rate Box A' || $current_shipping_type === 'Priority MailRM Regional Rate Box B') {
+                                $configured_indices_to_remove = array_merge($configured_indices_to_remove, range($ct, $ct + $item_entries - 1));
+                            }
+                            $ct += $item_entries;
+                        }
+                        foreach ($configured_indices_to_remove as $ct) {
+                            unset($usps_configured_types[$ct]);
+                        }
+                        $usps_configured_types = implode(', ', $usps_configured_types);
+                        $db->Execute(
+                            "UPDATE " . TABLE_CONFIGURATION . "
+                                SET configuration_value = '$usps_configured_types',
+                                    set_function = 'zen_cfg_usps_services([\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ',
+                                    last_modified = now()
+                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
+                              LIMIT 1"
+                        );
                         break;                                                          //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
@@ -1180,7 +1250,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . "
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
              VALUES
-                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, .21875, 0.00, 0, .8125, 0.00, 0, .8125, 0.00, 0, .9375, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 15, 0.00, 0, 20, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority MailRM Regional Rate Box A\', \'Priority MailRM Regional Rate Box B\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
+                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, .21875, 0.00, 0, .8125, 0.00, 0, .8125, 0.00, 0, .9375, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . "
@@ -1396,10 +1466,6 @@ class usps extends base
                         $Container = 'MD FLAT RATE BOX';
                     } elseif ($requested_type === 'Priority MailRM Large Flat Rate Box') {
                         $Container = 'LG FLAT RATE BOX';
-                    } elseif ($requested_type === 'Priority MailRM Regional Rate Box A') {
-                        $Container = 'REGIONALRATEBOXA';
-                    } elseif ($requested_type === 'Priority MailRM Regional Rate Box B') {
-                        $Container = 'REGIONALRATEBOXB';
                     }
                 } elseif (stripos($requested_type, 'Priority Mail Express') !== false) {
                     $service = 'EXPRESS COMMERCIAL';
@@ -2600,7 +2666,6 @@ function zen_cfg_usps_services($select_array, $key_value, $key = '')
                         '/Legal/',
                         '/Padded/',
                         '/Flat Rate/',
-                        '/Regional Rate/',
                         '/Express Guaranteed /',
                         '/Package\hService\h-\hRetail/',
                         '/Package Service/',
@@ -2618,7 +2683,6 @@ function zen_cfg_usps_services($select_array, $key_value, $key = '')
                         'Leg.',
                         'Pad.',
                         'F/R',
-                        'R/R',
                         'Exp Guar',
                         'Pkgs - Retail',
                         'Pkgs - Comm',

@@ -54,8 +54,11 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
-2023-01-27 by lat9 2023-mm-dd Version K11f
+2023-01-29 by lat9 2023-mm-dd Version K11f
     - Refactoring and declaring all class variables for use under PHP 7.4 and later
+    - 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' no longer supported
+       by USPS.  Remove from current configuration on auto-update; don't include in initial configuration
+       on fresh install.
 2022-08-07 by lat9/proseLA 2022-08-07 Version K11e
     - Auto-update not recognized for K11c -> K11d version, due to version name misspelling
 2022-07-30 by lat9/proseLA 2022-07-30 Version K11d
