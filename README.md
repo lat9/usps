@@ -10,7 +10,7 @@ Zen Cart support-thread link: https://www.zen-cart.com/showthread.php?227284-USP
 
 --------------------
 
-## Current Version: 2023-01-29 K11f
+## Current Version: 2023-01-30 K11g
 
 Starting with version `2022-07-10 K11b`, the module will attempt to automatically update its settings so that you no longer need to remove and re-install the module when a _small_ update is needed.
 
