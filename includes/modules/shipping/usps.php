@@ -1,7 +1,7 @@
 <?php
 /**
  * USPS Module for Zen Cart v1.5.6 through 1.5.8
- * USPS RateV4 Intl RateV2 - Jamuary 29, 2023 K11f
+ * USPS RateV4 Intl RateV2 - Jamuary 30, 2023 K11g
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -21,6 +21,7 @@
  * @version $Id: usps.php 2022-07-30 lat9 Version K11d $
  * @version $Id: usps.php 2022-08-07 lat9 Version K11e $
  * @version $Id: usps.php 2023-01-29 lat9 Version K11f $
+ * @version $Id: usps.php 2023-01-30 lat9 Version K11g $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -56,6 +57,9 @@ class usps extends base
    * @var string
    */
         $icon,
+
+        $tax_class,                     //- int
+        $tax_basis,                     //- string
   /**
    * Shipping module status
    *
@@ -97,8 +101,6 @@ class usps extends base
      */
         $insurable_value,
 
-        $tax_class,                     //- int
-        $tax_basis,                     //- string
         $debug_enabled,                 //- bool
         $debug_filename,                //- string
         $getTransitTime,                //- bool
@@ -121,7 +123,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2023-01-29 K11f';
+    const USPS_CURRENT_VERSION = '2023-01-30 K11g';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.

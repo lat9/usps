@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2023-01-29 Version K11f
+USPS RateV4 Intl RateV2 - 2023-01-30 Version K11g
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -54,6 +54,9 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2023-01-30 by lat9 2023-01-29 Version K11g
+    - tax_class must be public, not protected.  Causing OPC errors.
+
 2023-01-29 by lat9 2023-01-29 Version K11f
     - Refactoring and declaring all class variables for use under PHP 7.4 and later
     - 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' no longer supported
