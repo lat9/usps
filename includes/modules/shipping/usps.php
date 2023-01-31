@@ -262,6 +262,7 @@ class usps extends base
                     case (MODULE_SHIPPING_USPS_VERSION === '2022-07-12 K11c'):          //- Fall-through from above to continue checks
                     case (MODULE_SHIPPING_USPS_VERSION === '2022-07-30 K11d'):          //- Fall-through from above to continue checks
                     case (MODULE_SHIPPING_USPS_VERSION === '2022-08-07 K11e'):          //- Fall-through from above to continue checks
+                    case (MODULE_SHIPPING_USPS_VERSION === '2023-01-29 K11f'):          //- Fall-through from above to continue checks
                         // -----
                         // 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' methods are no longer
                         // supported by USPS; remove them from the configured shipping types and update the parameters for that
