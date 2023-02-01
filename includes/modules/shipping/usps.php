@@ -22,6 +22,7 @@
  * @version $Id: usps.php 2022-08-07 lat9 Version K11e $
  * @version $Id: usps.php 2023-01-29 lat9 Version K11f $
  * @version $Id: usps.php 2023-01-30 lat9 Version K11g $
+ * @version $Id: usps.php 2023-02-xx lat9 Version K11h $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -60,6 +61,7 @@ class usps extends base
 
         $tax_class,                     //- int
         $tax_basis,                     //- string
+        $quotes,                        //- array
   /**
    * Shipping module status
    *
@@ -111,7 +113,6 @@ class usps extends base
         $machinable,                    //- string
         $transitTimeCalculationMode,    //- string
         $uspsQuote,                     //- ???
-        $quotes,                        //- array
         $transittime,                   //- array
         $_check,                        //- ???
         $orders_tax,                    //- mixed
@@ -334,6 +335,8 @@ class usps extends base
                               WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
                               LIMIT 1"
                         );
+
+                    case (MODULE_SHIPPING_USPS_VERSION === '2023-01-30 K11g'):          //- Fall-through from above to continue checks
                         break;                                                          //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
