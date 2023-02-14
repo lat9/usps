@@ -22,7 +22,7 @@
  * @version $Id: usps.php 2022-08-07 lat9 Version K11e $
  * @version $Id: usps.php 2023-01-29 lat9 Version K11f $
  * @version $Id: usps.php 2023-01-30 lat9 Version K11g $
- * @version $Id: usps.php 2023-02-xx lat9 Version K11h $
+ * @version $Id: usps.php 2023-02-14 lat9 Version K11h $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -124,7 +124,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2023-01-30 K11g';
+    const USPS_CURRENT_VERSION = '2023-02-14 K11h';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
