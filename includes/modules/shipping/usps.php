@@ -367,7 +367,7 @@ class usps extends base
         // Quick return if the shipping-module's configuration will not allow it to
         // gather valid USPS quotes.  The shipping-module is disabled if this is the case.
         //
-        if ($this->checkConfiguration() === false) {
+        if ($this->checkConfiguration() === false || $this->checkCartContents() === false) {
             return;
         }
 
@@ -432,6 +432,21 @@ class usps extends base
             }
         }
         return $this->enabled;
+    }
+
+    // -----
+    // Storefront cart check.  Called from storefrontInitialization.  
+    // Will auto-disable the shipping if cart contents cannot be shipped
+    // by USPS
+    //
+    protected function checkCartContents() 
+    { 
+        $contents_ok = true;
+        $this->notify('NOTIFY_USPS_SHIPPING_CHECK_CART', 'usps', $contents_ok); 
+        if ($contents_ok === false) {
+            $this->enabled = false;
+        }
+        return; 
     }
 
     /**
