@@ -23,6 +23,7 @@
  * @version $Id: usps.php 2023-01-29 lat9 Version K11f $
  * @version $Id: usps.php 2023-01-30 lat9 Version K11g $
  * @version $Id: usps.php 2023-02-14 lat9 Version K11h $
+ * @version $Id: usps.php 2023-xx-77 lat9 Version K11i $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -367,7 +368,18 @@ class usps extends base
         // Quick return if the shipping-module's configuration will not allow it to
         // gather valid USPS quotes.  The shipping-module is disabled if this is the case.
         //
-        if ($this->checkConfiguration() === false || $this->checkCartContents() === false) {
+        if ($this->checkConfiguration() === false) {
+            return;
+        }
+
+        // -----
+        // Issue a notification to let a site-specific observer 'disallow' the current
+        // shopping-cart contents to be shipped via USPS.
+        //
+        $contents_ok = true;
+        $this->notify('NOTIFY_USPS_SHIPPING_CHECK_CART', 'usps', $contents_ok); 
+        if ($contents_ok === false) {
+            $this->enabled = false;
             return;
         }
 
@@ -432,21 +444,6 @@ class usps extends base
             }
         }
         return $this->enabled;
-    }
-
-    // -----
-    // Storefront cart check.  Called from storefrontInitialization.  
-    // Will auto-disable the shipping if cart contents cannot be shipped
-    // by USPS
-    //
-    protected function checkCartContents() 
-    { 
-        $contents_ok = true;
-        $this->notify('NOTIFY_USPS_SHIPPING_CHECK_CART', 'usps', $contents_ok); 
-        if ($contents_ok === false) {
-            $this->enabled = false;
-        }
-        return; 
     }
 
     /**

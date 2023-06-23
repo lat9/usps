@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2023-02-14 Version K11h
+USPS RateV4 Intl RateV2 - 2023-xx-yy Version K11i
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -54,6 +54,9 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2023-xx-yy by lat9 2023-xx-yy Version K11i
+    - Add notification to enable the USPS shipping module to be disabled based on site-specific customizations.
+
 2023-02-14 by lat9 2023-02-14 Version K11h
     - quotes must be public, not protected. Cheapest shipping (when it's USPS) isn't highlighted.
     - Automatic update from K11f not included in K11g!
