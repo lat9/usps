@@ -374,10 +374,10 @@ class usps extends base
 
         // -----
         // Issue a notification to let a site-specific observer 'disallow' the current
-        // shopping-cart contents to be shipped via USPS.
+        // shopping-cart contents to be shipped via USPS.  Added in K11i.
         //
         $contents_ok = true;
-        $this->notify('NOTIFY_USPS_SHIPPING_CHECK_CART', 'usps', $contents_ok); 
+        $this->notify('NOTIFY_USPS_SHIPPING_CHECK_CART', 'usps', $contents_ok);
         if ($contents_ok === false) {
             $this->enabled = false;
             return;
@@ -487,14 +487,6 @@ class usps extends base
                 $this->enabled = false;
             }
         }
-
-        global $template, $current_page_base;
-        // CUSTOMIZED CONDITIONS GO HERE
-        // Optionally add additional code here to change $this->enabled to false based on whatever custom rules you require.
-        // -----
-
-        // -----
-        // eof: optional additional code
 
         $this->notify('NOTIFY_SHIPPING_USPS_UPDATE_STATUS');
     }
@@ -691,10 +683,10 @@ class usps extends base
             $handling = 0;
             $usps_insurance_charge = 0;
 
-            $Package = ($this->is_us_shipment) ? $uspsQuote['Package'][$i]['Postage'] : $uspsQuote['Package']['Service'][$i];
+            $Package = ($this->is_us_shipment === true) ? $uspsQuote['Package'][$i]['Postage'] : $uspsQuote['Package']['Service'][$i];
 
             // Domestic first
-            if ($this->is_us_shipment) {
+            if ($this->is_us_shipment === true) {
                 if (!empty($Package['SpecialServices']['SpecialService'])) {
                     // if object has no legitimate children, turn it into a firstborn:
                     if (isset($Package['SpecialServices']['SpecialService']['ServiceName']) && !isset($Package['SpecialServices']['SpecialService'][0])) {
@@ -793,11 +785,11 @@ class usps extends base
             $Package['lookupRegex'] = preg_quote($type) . '(?:RM|TM)?$';
             if (isset($Package['FirstClassMailType'])) {
                 if (strcasecmp($Package['FirstClassMailType'], 'LETTER') === 0) {
-                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail(?:RM|TM)?(?: Stamped )?.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
+                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail(?:RM|TM)?(?: Stamped )?.*', preg_quote($type)) . ($this->is_us_shipment === false ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
                 } elseif (strcasecmp($Package['FirstClassMailType'], 'PARCEL') === 0) {
-                     $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
+                     $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . ($this->is_us_shipment === false ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
                 } elseif (strcasecmp($Package['FirstClassMailType'], 'FLAT') === 0) {
-                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . (!$this->is_us_shipment ? '(GXG|International)?.*' : '') . 'Envelope';
+                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . ($this->is_us_shipment === false ? '(GXG|International)?.*' : '') . 'Envelope';
                 }
             }
             $Package['lookupRegex'] = str_replace('Stamped Letter', 'Letter', $Package['lookupRegex']);
@@ -857,7 +849,7 @@ class usps extends base
                     // extract the ServiceID, so we can test for specific insurance types
                     preg_match('/\[([0-9]{1,3})\]/', $key1, $matches);
                     $serviceID = $matches[1];
-                    $hidden_costs_breakdown .= ($this->is_us_shipment ? ' SpecialServices: ' : ' ExtraServices: ') . $key1 . ' Amount: ' . number_format($val1, 2) . "\n";
+                    $hidden_costs_breakdown .= ($this->is_us_shipment === true ? ' SpecialServices: ' : ' ExtraServices: ') . $key1 . ' Amount: ' . number_format($val1, 2) . "\n";
                     // Test for Insurance type being returned  100=(General) Insurance, 125=Priority Mail, 101=Priority Mail Express
 
                     // Domestic Insurance 100, 101, 125 International 1
@@ -876,12 +868,12 @@ class usps extends base
                                             $insurance_test_flag = true;
                                         }
                                     }
-                            } else {
-                                if ($serviceID == 100) {
-                                    $insurance_test_flag = true;
+                                } else {
+                                    if ($serviceID == 100) {
+                                        $insurance_test_flag = true;
+                                    }
                                 }
                             }
-                        }
                         } else { // international
                             if ($serviceID == 1 && strpos($servicesSelectedIntl, $serviceID) !== false) {
                                 $insurance_test_flag = true;
@@ -1005,7 +997,7 @@ class usps extends base
                     $title . "\n" .
                     ' Original cost: ' .
                     number_format($cost_original, 2) .
-                    ($hiddenCost ? ($this->is_us_shipment ? ' SpecialServices: ' : ' ExtraServices: ') .
+                    ($hiddenCost ? ($this->is_us_shipment === true ? ' SpecialServices: ' : ' ExtraServices: ') .
                     number_format($hiddenCost, 2) : '') .
                     ' Total Cost: ' . number_format($cost, 2) .
                     ($usps_insurance_charge ? ' - $usps_insurance_charge: ' . number_format($usps_insurance_charge, 2) : '') . "\n";
@@ -1367,7 +1359,7 @@ class usps extends base
      */
     protected function _getQuote()
     {
-        global $order, $shipping_weight, $currencies;
+        global $order, $shipping_weight;
 
         $package_id = 'USPS DOMESTIC RETURNED: ' . "\n";
 
@@ -1465,16 +1457,16 @@ class usps extends base
                         // First-Class MailRM Letter\', \'First-Class MailRM Large Envelope\', \'First-Class Package Service - RetailTM
                         $service = 'First Class';
                         // disable request for First-Class MailRM Letter at > .21875 and not Retail
-                        if (($requested_type === 'First-Class Mail Letter') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail') && ($shipping_weight <= .21875)) {
+                        if ($requested_type === 'First-Class Mail Letter' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && $shipping_weight <= .21875) {
                             $FirstClassMailType = 'LETTER';
                         // disable request for First-Class Mail Large Envelope at > 13oz and not Retail
-                        } elseif (($requested_type === 'First-Class Mail Large Envelope') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail') && ($shipping_weight <= 13/16)) {
+                        } elseif ($requested_type === 'First-Class Mail Large Envelope' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && $shipping_weight <= 13/16) {
                             $FirstClassMailType = 'FLAT';
                         // disable request for First-Class Package Service - RetailTM(new retail parcel designation) at > 13oz and not Retail
-                        } elseif (($requested_type === 'First-Class Package Service - RetailTM') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail') && ($shipping_weight <= 13/16)) {
+                        } elseif ($requested_type === 'First-Class Package Service - RetailTM' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && $shipping_weight <= 13/16) {
                             $FirstClassMailType = 'PARCEL';
                         // disable request for First-ClassTM Package Service(existing commercial parcel designation) at > 1 lb and not Online(commercial pricing)
-                        } elseif (($requested_type === 'First-ClassTM Package Service') && (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online') && ($shipping_weight <= 15/16)) {
+                        } elseif ($requested_type === 'First-ClassTM Package Service' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && $shipping_weight <= 15/16) {
                             $service = 'First Class Commercial';
                             $FirstClassMailType = 'PACKAGE SERVICE';
                         } else {
@@ -1549,7 +1541,7 @@ class usps extends base
                         $usps_fragile .
                         '<Machinable>' . (($this->machinable === 'True') ? 'TRUE' : 'FALSE') . '</Machinable>' .
 //'<DropOffTime>23:59</DropOffTime>' .
-                        (($this->getTransitTime && $this->transitTimeCalculationMode === 'NEW') ? ('<ShipDate>' . $ship_date . '</ShipDate>') : '') .
+                        (($this->getTransitTime === true && $this->transitTimeCalculationMode === 'NEW') ? ('<ShipDate>' . $ship_date . '</ShipDate>') : '') .
                     '</Package>';
 
                 $package_id .=
@@ -1560,15 +1552,23 @@ class usps extends base
                 $package_count++;
 
                 // ask for Domestic transit times using old double-request method to individual USPS API for each shipping service requested
-                if ($this->getTransitTime && $this->transitTimeCalculationMode === 'OLD') {
+                if ($this->getTransitTime === true && $this->transitTimeCalculationMode === 'OLD') {
                     $transitreq = 'USERID="' . MODULE_SHIPPING_USPS_USERID . '">' . '<OriginZip>' . SHIPPING_ORIGIN_ZIP . '</OriginZip>' . '<DestinationZip>' . $ZipDestination . '</DestinationZip>';
+                    $transitreq_express = str_replace('Zip>', 'ZIP>', $transitreq);
                     switch ($service) {
                         case 'PRIORITY COMMERCIAL':
-                        case 'PRIORITY': $transreq[$requested_type] = 'API=PriorityMail&XML=' . urlencode( '<PriorityMailRequest ' . $transitreq . '</PriorityMailRequest>');
+                        case 'PRIORITY':
+                            $transreq[$requested_type] = 'API=PriorityMail&XML=' . urlencode( '<PriorityMailRequest ' . $transitreq . '</PriorityMailRequest>');
                             break;
-                        case 'PARCEL':   $transreq[$requested_type] = 'API=StandardB&XML=' . urlencode( '<StandardBRequest ' . $transitreq . '</StandardBRequest>');
+                        case 'EXPRESS COMMERCIAL':
+                            $transreq[$requested_type] = 'API=ExpressmailCommitment&XML=' . urlencode( '<ExpressMailCommitmentRequest ' . $transitreq_express . '<Date></Date></ExpressMailCommitmentRequest>');
                             break;
-                        case 'First-Class Mail':$transreq[$requested_type] = 'API=FirstClassMail&XML=' . urlencode( '<FirstClassMailRequest ' . $transitreq . '</FirstClassMailRequest>');
+                        case 'PARCEL':
+                            $transreq[$requested_type] = 'API=StandardB&XML=' . urlencode( '<StandardBRequest ' . $transitreq . '</StandardBRequest>');
+                            break;
+                        case 'First-Class':
+                        case 'First-Class Commercial':
+                            $transreq[$requested_type] = 'API=FirstClassMail&XML=' . urlencode( '<FirstClassMailRequest ' . $transitreq . '</FirstClassMailRequest>');
                             break;
                         case 'MEDIA':
                         default:
@@ -1679,7 +1679,7 @@ class usps extends base
                     '</Package>' .
                  '</IntlRateV2Request>';
 
-            if ($this->getTransitTime) {
+            if ($this->getTransitTime === true) {
                 $transreq[$requested_type] = '';
             }
             $request_raw = $request;
@@ -1687,30 +1687,14 @@ class usps extends base
         }
 
         // Prepare to make quote-request to USPS servers
-        switch (MODULE_SHIPPING_USPS_SERVER) {
-            // -----
-            // 20200924 Update: USPS will be phasing out the http:// (non-secure) URL.
-            //
-            // Secure APIs: https://secure.shippingapis.com/ShippingAPI.dll
-            // Non-secure APIs: http://production.shippingapis.com
-            //
-            case 'production':
-                $usps_server = 'https://secure.shippingapis.com';
-                $api_dll = 'ShippingAPI.dll';
-                break;
-            case 'test':
-            default:
-                $usps_server = 'https://stg-secure.shippingapis.com';
-                $api_dll = 'ShippingApi.dll';
-                break;
-        }
+        $usps_endpoint = (MODULE_SHIPPING_USPS_SERVER === 'production') ? 'https://secure.shippingapis.com/ShippingAPI.dll' : 'https://stg-secure.shippingapis.com/ShippingApi.dll';
 
         // BOF CURL
         // Send quote request via CURL
         global $request_type;
         $ch = curl_init();
         $curl_options = [
-            CURLOPT_URL => $usps_server . '/' . $api_dll,
+            CURLOPT_URL => $usps_endpoint,
             CURLOPT_REFERER => ($request_type == 'SSL') ? (HTTPS_SERVER . DIR_WS_HTTPS_CATALOG) : (HTTP_SERVER . DIR_WS_CATALOG),
             CURLOPT_FRESH_CONNECT => 1,
             CURLOPT_HEADER => 0,
@@ -1742,7 +1726,7 @@ class usps extends base
         $this->commInfo = curl_getinfo($ch);
 
         // SUBMIT ADDITIONAL REQUESTS FOR DELIVERY TIME ESTIMATES
-        if ($this->transitTimeCalculationMode === 'OLD' && $this->getTransitTime && count($transreq) !== 0) {
+        if ($this->transitTimeCalculationMode === 'OLD' && $this->getTransitTime === true && count($transreq) !== 0) {
             $transitResp = [];
             foreach ($transreq as $key => $value) {
                 $transitResp[$key] = '';
@@ -1875,18 +1859,11 @@ class usps extends base
             $message .= 'International Services Selected: ' . "\n";
             $options = explode(', ', MODULE_SHIPPING_USPS_INTL_SERVICES);
         }
-        foreach ($options as $key => $val) {
-            if (strlen($options[$key]) > 1) {
-                switch ($options[$key + 1]) {
-                    case 'C':
-                    case 'S':
-                    case 'Y':
-                        $message .= $options[$key] . "\n";
-                        break;
-                    default:
-                        break;
-                }
+        for ($i = 0, $n = count($options); $i < $n; $i += 2) {
+            if ($options[$i + 1] === 'N') {
+                continue;
             }
+            $message .= $options[$i] . "\n";
         }
         $this->uspsDebug($message);
     }
@@ -1920,7 +1897,7 @@ class usps extends base
                 '<ValueOfContents>',        //-International shipments only
             ],
             [
-                'TM', 
+                'TM',
                 'RM',
                 "\n\n" . '<Service ID',
                 "\n" . '<SvcDescription',
@@ -1959,12 +1936,7 @@ class usps extends base
             $val = json_decode(json_encode(simplexml_load_string($val)), true);
             switch (true) {
                 case (stripos($service, 'Priority Mail Express') !== false):
-                    $time = $val['CommitmentTime'];
-                    if ($time == '' || $time == 'No Data') {
-                        $time = '1 - 2 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
-                    } else {
-                        $time = 'Tomorrow by ' . $time;
-                    }
+                    $time = $val['Commitment'][0]['CommitmentName'];
                     break;
                 case (stripos($service, 'Priority Mail') !== false):
                     $time = $val['Days'];
@@ -1989,7 +1961,6 @@ class usps extends base
                 case (stripos($service, 'First-Class') !== false):
                     $time = '2 - 5 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
                     break;
-//                case (preg_match('#Media Mail Parcel#i', $service)):
                 default:
                     $time = '';
                     break;
@@ -1997,12 +1968,10 @@ class usps extends base
             $this->transittime[$service] = ($time === '') ? '' : (' (' . $time . ')');
  
             $this->uspsDebug(
-                'Transit Time' . "\n" .
-                'Service' . $service . "\n" .
-                'CommitmentTime (from USPS): ' . $val['CommitmentTime'] . "\n" .
-                'Days(from USPS): ' . $val['Days'] . "\n" .
+                'Service: ' . $service . "\n" .
+                'USPS Response: ' . json_encode($val) . "\n" .
                 '$time (calculated): ' . $time . "\n" .
-                'Translation:' . $this->transittime[$service] . "\n\n"
+                'Translation:' . $this->transittime[$service] . "\n"
             );
         }
     }
@@ -2559,16 +2528,20 @@ $specialservicesdomestic: Certified MailRM USPS TrackingTM Insurance Priority Ma
             'Insurance Restricted Delivery (Priority Mail Express)' => '178',
             'Insurance Restricted Delivery (Priority Mail)' => '179',
         ];
+
+        // -----
+        // The "Extra Services (Domestic)" setting is stored as a comma-separated list of
+        // ServiceOption names and whether/not they're to be requested:
+        //
+        // Service Name, [N|Y], Service Name, [N|Y], ...
+        //
         $serviceOptions = explode(', ', MODULE_SHIPPING_USPS_DMST_SERVICES); // domestic
         $specialservicesdomestic = '';
-        foreach ($serviceOptions as $key => $val) {
-            if (strlen($serviceOptions[$key]) > 1) {
-                if ($serviceOptions[$key + 1] === 'C' || $serviceOptions[$key + 1] === 'S' || $serviceOptions[$key + 1] === 'Y') {
-                    if (array_key_exists($serviceOptions[$key], $options2codes)) {
-                        $specialservicesdomestic .= '  <SpecialService>' . $options2codes[$serviceOptions[$key]] . '</SpecialService>' . "\n";
-                    }
-                }
+        for ($i = 0, $n = count($serviceOptions); $i < $n; $i += 2) {
+            if ($serviceOptions[$i + 1] === 'N' || !array_key_exists($serviceOptions[$i], $options2codes)) {
+                continue;
             }
+            $specialservicesdomestic .= '  <SpecialService>' . $options2codes[$serviceOptions[$i]] . '</SpecialService>' . "\n";
         }
         if ($specialservicesdomestic !== '') {
             $specialservicesdomestic = '<SpecialServices>' . $specialservicesdomestic . '</SpecialServices>';
@@ -2588,31 +2561,36 @@ USPS Extra Service Name ServiceID - Our Extra Service Name
  Certificate of Mailing 6 - Certificate of Mailing
  Electronic USPS Delivery Confirmation International 9 - Electronic USPS Delivery Confirmation International
 */
+        // -----
+        // The "Extra Services (International)" setting is stored as a comma-separated list of
+        // ServiceOption names and whether/not they're to be requested:
+        //
+        // Service Name, [N|Y], Service Name, [N|Y], ...
+        //
         $iserviceOptions = explode(', ', MODULE_SHIPPING_USPS_INTL_SERVICES);
         $extraserviceinternational = '';
-        foreach ($iserviceOptions as $key => $val) {
-            if (strlen($iserviceOptions[$key]) > 1) {
-                if ($iserviceOptions[$key + 1] === 'C' || $iserviceOptions[$key + 1] === 'S' || $iserviceOptions[$key + 1] === 'Y') {
-                    switch ($iserviceOptions[$key]) {
-                        case 'Registered Mail':
-                            $extraserviceinternational .= '  <ExtraService>0</ExtraService>' . "\n";
-                            break;
-                        case 'Insurance':
-                            $extraserviceinternational .= '  <ExtraService>1</ExtraService>' . "\n";
-                            break;
-                        case 'Return Receipt':
-                            $extraserviceinternational .= '  <ExtraService>2</ExtraService>' . "\n";
-                            break;
-                        case 'Certificate of Mailing':
-                            $extraserviceinternational .= '  <ExtraService>6</ExtraService>' . "\n";
-                            break;
-                        case 'Electronic USPS Delivery Confirmation International':
-                            $extraserviceinternational .= '  <ExtraService>9</ExtraService>' . "\n";
-                            break;
-                        default:
-                            break;
-                    }
-                }
+        for ($i = 0, $n = count($iserviceOptions); $i < $n; $i += 2) {
+            if ($iserviceOptions[$i + 1] === 'N') {
+                continue;
+            }
+            switch ($iserviceOptions[$i]) {
+                case 'Registered Mail':
+                    $extraserviceinternational .= '  <ExtraService>0</ExtraService>' . "\n";
+                    break;
+                case 'Insurance':
+                    $extraserviceinternational .= '  <ExtraService>1</ExtraService>' . "\n";
+                    break;
+                case 'Return Receipt':
+                    $extraserviceinternational .= '  <ExtraService>2</ExtraService>' . "\n";
+                    break;
+                case 'Certificate of Mailing':
+                    $extraserviceinternational .= '  <ExtraService>6</ExtraService>' . "\n";
+                    break;
+                case 'Electronic USPS Delivery Confirmation International':
+                    $extraserviceinternational .= '  <ExtraService>9</ExtraService>' . "\n";
+                    break;
+                default:
+                    break;
             }
         }
         if ($extraserviceinternational !== '') {

@@ -56,6 +56,7 @@ To install or update this code ...
 ===== CHANGE HISTORY =====
 2023-xx-yy by lat9 2023-xx-yy Version K11i
     - Add notification to enable the USPS shipping module to be disabled based on site-specific customizations.
+    - Correct PHP Warning when transit-time calculation is set to "OLD".
 
 2023-02-14 by lat9 2023-02-14 Version K11h
     - quotes must be public, not protected. Cheapest shipping (when it's USPS) isn't highlighted.
