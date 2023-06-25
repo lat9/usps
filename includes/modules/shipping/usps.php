@@ -23,7 +23,7 @@
  * @version $Id: usps.php 2023-01-29 lat9 Version K11f $
  * @version $Id: usps.php 2023-01-30 lat9 Version K11g $
  * @version $Id: usps.php 2023-02-14 lat9 Version K11h $
- * @version $Id: usps.php 2023-xx-77 lat9 Version K11i $
+ * @version $Id: usps.php 2023-xx-yy lat9 Version K11i $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -230,115 +230,19 @@ class usps extends base
             // the site's admin will need to save the current settings and uninstall/reinstall the module.
             //
             $chk_sql = $db->Execute(
-                "SELECT * 
-                   FROM " . TABLE_CONFIGURATION . " 
-                  WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%' "
+                "SELECT configuration_key
+                   FROM " . TABLE_CONFIGURATION . "
+                  WHERE configuration_key like 'MODULE\_SHIPPING\_USPS\_%'"
             );
             if (MODULE_SHIPPING_USPS_VERSION !== self::USPS_CURRENT_VERSION || count($this->keys()) !== $chk_sql->RecordCount()) {
-                switch (true) {
-                    case (MODULE_SHIPPING_USPS_VERSION ==='2021-05-05 K11a'):
-                        $db->Execute(
-                            "UPDATE " . TABLE_CONFIGURATION . "
-                                SET configuration_value = REPLACE(configuration_value, 'Priority MailTM', 'Priority MailRM'),
-                                    set_function = REPLACE(set_function, 'Priority MailTM', 'Priority MailRM')
-                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
-                              LIMIT 1"
-                        );
-                        $db->Execute(
-                            "UPDATE " . TABLE_CONFIGURATION . "
-                                SET configuration_value = REPLACE(configuration_value, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM'),
-                                    set_function = REPLACE(set_function, 'Priority Mail ExpressTM', 'Priority Mail ExpressRM')
-                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
-                              LIMIT 1"
-                        );
-
-                    case (MODULE_SHIPPING_USPS_VERSION === '2022-07-10 K11b'):          //- Fall-through from above to continue checks
-                        $db->Execute(
-                            "UPDATE " . TABLE_CONFIGURATION . "
-                                SET configuration_value = REPLACE(configuration_value, 'Priority Mail Express InternationalTM', 'Priority Mail Express InternationalRM'),
-                                    set_function = REPLACE(set_function, 'Priority Mail Express InternationalTM', 'Priority Mail Express InternationalRM')
-                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
-                              LIMIT 1"
-                        );
-
-                    case (MODULE_SHIPPING_USPS_VERSION === '2022-07-12 K11c'):          //- Fall-through from above to continue checks
-                    case (MODULE_SHIPPING_USPS_VERSION === '2022-07-30 K11d'):          //- Fall-through from above to continue checks
-                    case (MODULE_SHIPPING_USPS_VERSION === '2022-08-07 K11e'):          //- Fall-through from above to continue checks
-                    case (MODULE_SHIPPING_USPS_VERSION === '2023-01-29 K11f'):          //- Fall-through from above to continue checks
-                        // -----
-                        // 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' methods are no longer
-                        // supported by USPS; remove them from the configured shipping types and update the parameters for that
-                        // setting's 'set_function'.
-                        //
-                        // The configured shipping types are laid out as an imploded string of a numerically-indexed array, either 3 or 4 elements
-                        // per selection.
-                        //
-                        // - If the current element matches one of the shipping types, implying that it is currently selected, then
-                        //   the type's entry has 4 elements:
-                        //   - The name, minimum weight, maximum weight and handling fee
-                        // - Otherwise, the associated shipping type is *not* selected and the type's entry has 3 elements:
-                        //   - The minimum weight, maximum weight and handling fee.
-                        //
-                        // See the zen_cfg_usps_services function at the bottom of this module for admin-level configuration processing.
-                        //
-                        $usps_configured_types = explode(', ', MODULE_SHIPPING_USPS_TYPES);
-                        $usps_shipping_types_old = [
-                            'First-Class Mail Letter',
-                            'First-Class Mail Large Envelope',
-                            'First-Class Package Service - RetailTM',
-                            'First-ClassTM Package Service',
-                            'Media Mail Parcel',
-                            'USPS Retail GroundRM',
-                            'Priority MailRM',
-                            'Priority MailRM Flat Rate Envelope',
-                            'Priority MailRM Legal Flat Rate Envelope',
-                            'Priority MailRM Padded Flat Rate Envelope',
-                            'Priority MailRM Small Flat Rate Box',
-                            'Priority MailRM Medium Flat Rate Box',
-                            'Priority MailRM Large Flat Rate Box',
-                            'Priority MailRM Regional Rate Box A',
-                            'Priority MailRM Regional Rate Box B',
-                            'Priority Mail ExpressRM',
-                            'Priority Mail ExpressRM Flat Rate Envelope',
-                            'Priority Mail ExpressRM Legal Flat Rate Envelope',
-                            'First-Class MailRM International Letter',
-                            'First-Class MailRM International Large Envelope',
-                            'First-Class Package International ServiceTM',
-                            'Priority Mail InternationalRM',
-                            'Priority Mail InternationalRM Flat Rate Envelope',
-                            'Priority Mail InternationalRM Small Flat Rate Box',
-                            'Priority Mail InternationalRM Medium Flat Rate Box',
-                            'Priority Mail InternationalRM Large Flat Rate Box',
-                            'Priority Mail Express InternationalTM',
-                            'Priority Mail Express InternationalTM Flat Rate Envelope',
-                            'USPS GXGTM Envelopes',
-                            'Global Express GuaranteedRM (GXG)',
-                        ];
-                        $usps_configured_types = explode(', ', MODULE_SHIPPING_USPS_TYPES);
-                        $configured_indices_to_remove = [];
-                        for ($sto = 0, $sto_cnt = count($usps_shipping_types_old), $ct = 0; $sto < $sto_cnt; $sto++) {
-                            $current_shipping_type = $usps_shipping_types_old[$sto];
-                            $item_entries = ($usps_configured_types[$ct] === $current_shipping_type) ? 4 : 3;
-                            if ($current_shipping_type === 'Priority MailRM Regional Rate Box A' || $current_shipping_type === 'Priority MailRM Regional Rate Box B') {
-                                $configured_indices_to_remove = array_merge($configured_indices_to_remove, range($ct, $ct + $item_entries - 1));
-                            }
-                            $ct += $item_entries;
-                        }
-                        foreach ($configured_indices_to_remove as $ct) {
-                            unset($usps_configured_types[$ct]);
-                        }
-                        $usps_configured_types = implode(', ', $usps_configured_types);
-                        $db->Execute(
-                            "UPDATE " . TABLE_CONFIGURATION . "
-                                SET configuration_value = '$usps_configured_types',
-                                    set_function = 'zen_cfg_usps_services([\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ',
-                                    last_modified = now()
-                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
-                              LIMIT 1"
-                        );
-
-                    case (MODULE_SHIPPING_USPS_VERSION === '2023-01-30 K11g'):          //- Fall-through from above to continue checks
-                        break;                                                          //- END OF AUTOMATIC UPDATE CHECKS!
+                switch (MODULE_SHIPPING_USPS_VERSION) {
+                    // -----
+                    // Note that versions prior to K11g need to remove/re-install due to removal of the
+                    // 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' shipping methods.
+                    //
+                    case '2023-01-30 K11g':
+                    case '2023-02-14 K11h':     //- Fall-through from above to continue checks
+                        break;                  //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
                         $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
@@ -349,7 +253,7 @@ class usps extends base
                     $db->Execute(
                         "UPDATE " . TABLE_CONFIGURATION . "
                             SET configuration_value = '" . self::USPS_CURRENT_VERSION . "',
-                                set_function = 'zen_cfg_select_option(array(\'" . self::USPS_CURRENT_VERSION . "\'),'
+                                set_function = 'zen_cfg_select_option([\'" . self::USPS_CURRENT_VERSION . "\'],'
                           WHERE configuration_key = 'MODULE_SHIPPING_USPS_VERSION'
                           LIMIT 1"
                     );
@@ -831,9 +735,9 @@ class usps extends base
             $rate_type = (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online') ? 'PriceOnline' : 'Price';
             foreach ($Services as $key => $val) {
                 if ($Services[$key]['ServiceAdmin'] === 'Y') {
-                    $hiddenServices[] = array(
+                    $hiddenServices[] = [
                         $Services[$key]['ServiceName'] . ' [' . $Services[$key]['ServiceID'] . ']' => $Services[$key][$rate_type]
-                    );
+                    ];
                 }
             }
 
