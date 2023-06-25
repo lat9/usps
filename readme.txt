@@ -55,10 +55,15 @@ To install or update this code ...
 
 ===== CHANGE HISTORY =====
 2023-xx-yy by lat9 2023-xx-yy Version K11i
-    - Add notification to enable the USPS shipping module to be disabled based on site-specific customizations.
+    - Add notifications to:
+      - Enable the USPS shipping module to be disabled based on site-specific customizations (NOTIFY_USPS_SHIPPING_CHECK_CART).
+      - Provide CUSTOM transit-time calculations (NOTIFY_SHIPPING_USPS_CUSTOM_TRANSIT_TIME).
+      - Manipulate the 'request' being sent to USPS (NOTIFY_SHIPPING_USPS_US_DELIVERY_REQUEST_READY and NOTIFY_SHIPPING_USPS_INTL_DELIVERY_REQUEST_READY).
+      - Manipulate the 'response' received from USPS (NOTIFY_SHIPPING_USPS_AFTER_GETQUOTE).
     - Correct PHP Warning when transit-time calculation is set to "OLD".
     - Remove K11f changes that attempted (keyword) to remove the regional boxes from the configuration.
       - Installations prior to K11g will need to "Remove" and then re "Install" the shipping module.
+    - 'Clean up' various code sections.
 
 2023-02-14 by lat9 2023-02-14 Version K11h
     - quotes must be public, not protected. Cheapest shipping (when it's USPS) isn't highlighted.
