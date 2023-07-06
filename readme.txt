@@ -64,6 +64,7 @@ To install or update this code ...
     - Remove K11f changes that attempted (keyword) to remove the regional boxes from the configuration.
       - Installations prior to K11g will need to "Remove" and then re "Install" the shipping module.
     - 'Clean up' various code sections.
+    - Correct PHP Warnings when a country (like Aruba) has only one international service available.
 
 2023-02-14 by lat9 2023-02-14 Version K11h
     - quotes must be public, not protected. Cheapest shipping (when it's USPS) isn't highlighted.

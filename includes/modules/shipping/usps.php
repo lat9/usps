@@ -545,18 +545,26 @@ class usps extends base
         }
 
         if ($this->is_us_shipment === true) {
-            if (!isset($uspsQuote['Package']) || !is_array($uspsQuote['Package'])) {
-                $PackageSize = 0;
-            } else {
-                $PackageSize = count($uspsQuote['Package']);
-                // if object has no legitimate children, turn it into a firstborn:
-                if (isset($uspsQuote['Package']['ZipDestination']) && !isset($uspsQuote['Package'][0]['Postage'])) {
-                    $uspsQuote['Package'][] = $uspsQuote['Package'];
-                    $PackageSize = 1;
-                }
+            // if object has no legitimate children, turn it into a firstborn:
+            if (isset($uspsQuote['Package']['ZipDestination']) && !isset($uspsQuote['Package'][0]['Postage'])) {
+                $uspsQuote['Package'] = [
+                    $uspsQuote['Package'],
+                ];
             }
+            $PackageSize = count($uspsQuote['Package']);
+            $domestic_service_varname = (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online') ? 'AvailableOnline' : 'Available';
         } else {
+            // -----
+            // Some countries, notably Aruba, have only one service available, turn this into
+            // a single-element array.
+            //
+            if (isset($uspsQuote['Package']['Service']['SvcDescription']) && !isset($uspsQuote['Package']['Service'][0])) {
+                $uspsQuote['Package']['Service'] = [
+                    $uspsQuote['Package']['Service']
+                ];
+            }
             $PackageSize = count($uspsQuote['Package']['Service']);
+            $intl_service_varname = (MODULE_SHIPPING_USPS_RATE_TYPE === 'Online') ? 'OnlineAvailable' : 'Available';
         }
 
         for ($i = 0; $i < $PackageSize; $i++) {
@@ -582,27 +590,29 @@ class usps extends base
                     }
 
                     foreach ($Package['SpecialServices']['SpecialService'] as $key => $val) {
+                        $service_name = $val['ServiceName'];
+
                         // translate friendly names for Insurance Restricted Delivery 177, 178, 179, since USPS rebranded to remove all sense of explanations
-                        if ($val['ServiceName'] === 'Insurance Restricted Delivery') {
+                        if ($service_name === 'Insurance Restricted Delivery') {
                             if ($val['ServiceID'] === '178') {
-                                $val['ServiceName'] = 'Insurance Restricted Delivery (Priority Mail Express)';
+                                $service_name = 'Insurance Restricted Delivery (Priority Mail Express)';
                             } elseif ($val['ServiceID'] === '179') {
-                                $val['ServiceName'] = 'Insurance Restricted Delivery (Priority Mail)';
+                                $service_name = 'Insurance Restricted Delivery (Priority Mail)';
                             }
                         }
                         // translate friendly names for insurance 100, 101, 125, since USPS rebranded to remove all sense of explanations
-                        if ($val['ServiceName'] === 'Insurance') {
+                        if ($service_name === 'Insurance') {
                             if ($val['ServiceID'] === '125') {
-                                $val['ServiceName'] = 'Priority Mail Insurance';
+                                $service_name = 'Priority Mail Insurance';
                             } elseif ($val['ServiceID'] === '101') {
-                                $val['ServiceName'] = 'Priority Mail Express Insurance';
+                                $service_name = 'Priority Mail Express Insurance';
                             }
                         }
 
-                        $val['ServiceName'] = $this->clean_usps_marks($val['ServiceName']);
-
-                        if (!empty($dExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && !empty($val['AvailableOnline']) && strtoupper($val['AvailableOnline']) === 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && !empty($val['Available']) && strtoupper($val['Available']) === 'TRUE'))) {
-                            $val['ServiceAdmin'] = $this->clean_usps_marks($dExtras[$val['ServiceName']]);
+                        $service_name = $this->clean_usps_marks($service_name);
+                        if (!empty($dExtras[$service_name]) && !empty($val[$domestic_service_varname]) && strtoupper($val[$domestic_service_varname]) === 'TRUE') {
+                            $val['ServiceAdmin'] = $this->clean_usps_marks($dExtras[$service_name]);
+                            $val['ServiceName'] = $service_name;
                             $Services[] = $val;
                         }
                     }
@@ -622,9 +632,10 @@ class usps extends base
                     }
 
                     foreach ($Package['ExtraServices']['ExtraService'] as $key => $val) {
-                        $val['ServiceName'] = $this->clean_usps_marks($val['ServiceName']);
-                        if (isset($iExtras[$val['ServiceName']]) && !empty($iExtras[$val['ServiceName']]) && ((MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && strtoupper($val['OnlineAvailable']) === 'TRUE') || (MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && strtoupper($val['Available']) === 'TRUE'))) {
-                            $val['ServiceAdmin'] = $this->clean_usps_marks($iExtras[$val['ServiceName']]);
+                        $service_name = $this->clean_usps_marks($val['ServiceName']);
+                         if (!empty($iExtras[$service_name]) && strtoupper($val[$intl_service_varname]) === 'TRUE') {
+                            $val['ServiceAdmin'] = $this->clean_usps_marks($iExtras[$service_name]);
+                            $val['ServiceName'] = $service_name;
                             $Services[] = $val;
                         }
                     }
@@ -1262,7 +1273,6 @@ class usps extends base
                 if (is_numeric($requested_type) || preg_match('#(GXG|International)#i' , $requested_type)) {
                     continue;
                 }
-                $FirstClassMailType = '';
                 $Container = 'VARIABLE';
                 if ($requested_type === 'Media Mail Parcel') {
                     $service = 'MEDIA';
@@ -1738,7 +1748,7 @@ class usps extends base
                         $time .= ' ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
                     }
                     break;
-                case (stripos($service, 'USPS Retail Ground') !== false):
+                case (stripos($service, 'USPS Ground Advantage') !== false):
                     $time = $val['Days'];
                     if ($time === '' || $time === 'No Data') {
                         $time = '4 - 7 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
@@ -1784,7 +1794,7 @@ class usps extends base
                 case (stripos($service, 'Priority Mail') !== false):
                     $time = '2 - 3 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
                     break;
-                case (stripos($service, 'USPS Ground AdvantageTM') !== false):
+                case (stripos($service, 'USPS Ground Advantage') !== false):
                     $time = '4 - 7 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
                 break;
                 default:
