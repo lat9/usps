@@ -17,6 +17,7 @@
  * @version $Id: usps.php 2020-09-24 lat9 Version K11 $
  * @version $Id: usps.php 2021-07-14 lat9 Version K11b $
  * @version $Id: usps.php 2023-01-26 lat9 Version K11f $
+ * @version $Id: usps.php 2023-xx-yy lat9 Version K11i $
  */
 define('MODULE_SHIPPING_USPS_TEXT_TITLE', 'United States Postal Service');
 define('MODULE_SHIPPING_USPS_TEXT_SHORT_TITLE', 'USPS');
@@ -42,7 +43,7 @@ define('MODULE_SHIPPING_USPS_TEXT_INTL_HIDE', 'Hide Shipping Regulations');
 // to the customer?  Choose 'True' to display the regulations or 'False' (the default) otherwise.
 //
 if (!defined('MODULE_SHIPPING_USPS_REGULATIONS')) {
-    define('MODULE_SHIPPING_USPS_REGULATIONS', 'True');      //-Either 'False' (default) or 'True'
+    define('MODULE_SHIPPING_USPS_REGULATIONS', 'False');      //-Either 'False' (default) or 'True'
 }
 
 // -----
@@ -51,29 +52,4 @@ if (!defined('MODULE_SHIPPING_USPS_REGULATIONS')) {
 //
 if (!defined('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF')) {
     define('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF', '1400');
-}
-
-// -----
-// Identifies whether/not a check for the database field 'products::products_groundonly' should be made.  If any products
-// in the cart have that field set to '1', then the shipping request will indicate 'HAZMAT' contents and the
-// shipping type will be forced to USPS Ground.  Valid values are 'true', 'false' (the default) and 'force' (to force all
-// USPS quotes to use Ground only).
-//
-// NOTE: Setting this value to 'true' if that field doesn't exist in your database will result in a fatal MySQL error
-// when the quote-request is made.
-//
-if (!defined('MODULE_SHIPPING_USPS_GROUNDONLY')) {
-    define('MODULE_SHIPPING_USPS_GROUNDONLY', 'false');
-}
-
-// -----
-// Identifies whether/not a check for the database field 'products::products_fragile' should be made.  If any products
-// in the cart have that field set to '1', then the shipping request will indicate 'Fragile' contents. Valid values 
-// are 'true', 'false' (the default) and 'force' (to indicate that all the store's products are fragile).
-//
-// NOTE: Setting this value to 'true' if that field doesn't exist in your database will result in a fatal MySQL error
-// when the quote-request is made.
-//
-if (!defined('MODULE_SHIPPING_USPS_FRAGILE')) {
-    define('MODULE_SHIPPING_USPS_FRAGILE', 'false');
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * USPS Module for Zen Cart v1.5.6 through 1.5.8
- * USPS RateV4 Intl RateV2 - Jamuary 30, 2023 K11g
+ * USPS RateV4 Intl RateV2 - July xx, 2023 K11i
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -125,7 +125,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2023-02-14 K11h';
+    const USPS_CURRENT_VERSION = '2023-07-05 K11i-beta1';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -237,15 +237,15 @@ class usps extends base
             if (MODULE_SHIPPING_USPS_VERSION !== self::USPS_CURRENT_VERSION || count($this->keys()) !== $chk_sql->RecordCount()) {
                 switch (MODULE_SHIPPING_USPS_VERSION) {
                     // -----
-                    // Note that versions prior to K11g need to remove/re-install due to removal of the
-                    // 'Priority MailRM Regional Rate Box A' and 'Priority MailRM Regional Rate Box B' shipping methods.
+                    // Note that versions prior to K11i need to remove/re-install due to removal of the
+                    // various 'First Class' methods and the renaming of USPS Retail Ground to
+                    // USPS Ground Advantage.
                     //
-                    case '2023-01-30 K11g':
-                    case '2023-02-14 K11h':     //- Fall-through from above to continue checks
+                    case '2023-07-05 K11i-beta1':     //- Fall-through from above to continue checks
                         break;                  //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
-                        $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date you should reinstall!' . '</span>';
+                        $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date, you should reinstall!' . '</span>';
                         $this->enabled = false;
                         break;
                 }
@@ -473,7 +473,7 @@ class usps extends base
         if (!is_array($uspsQuote)) {
             $this->quotes = [
                 'module' => $this->title,
-                'error' => MODULE_SHIPPING_USPS_TEXT_ERROR . (MODULE_SHIPPING_USPS_SERVER == 'test' ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
+                'error' => MODULE_SHIPPING_USPS_TEXT_ERROR . (MODULE_SHIPPING_USPS_SERVER === 'test' ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
             ];
             return $this->quotes;
         }
@@ -559,8 +559,6 @@ class usps extends base
             $PackageSize = count($uspsQuote['Package']['Service']);
         }
 
-        // display 1st occurance of First Class and skip others for the US - start counter
-        $cnt_first = 0;
         for ($i = 0; $i < $PackageSize; $i++) {
             if (!empty($uspsQuote['Package'][$i]['Error'])) {
                 continue;
@@ -648,13 +646,6 @@ class usps extends base
             }
             $type_rebuilt = $type;
 
-            // Detect which First-Class type has been quoted, since USPS doesn't consistently return the type in the name of the service
-            if (!isset($Package['FirstClassMailType']) || $Package['FirstClassMailType'] === '') {
-                if (isset($uspsQuote['Package'][$i]) && isset($uspsQuote['Package'][$i]['FirstClassMailType']) && $uspsQuote['Package'][$i]['FirstClassMailType'] !== '') {
-                    $Package['FirstClassMailType'] = $uspsQuote['Package'][$i]['FirstClassMailType']; // LETTER or FLAT or PARCEL
-                }
-            }
-
             // init vars used later
             $minweight = 0;
             $maxweight = 0;
@@ -662,20 +653,6 @@ class usps extends base
 
             // Build a match pattern for regex compare later against selected allowed services
             $Package['lookupRegex'] = preg_quote($type) . '(?:RM|TM)?$';
-            if (isset($Package['FirstClassMailType'])) {
-                if (strcasecmp($Package['FirstClassMailType'], 'LETTER') === 0) {
-                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail(?:RM|TM)?(?: Stamped )?.*', preg_quote($type)) . ($this->is_us_shipment === false ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
-                } elseif (strcasecmp($Package['FirstClassMailType'], 'PARCEL') === 0) {
-                     $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . ($this->is_us_shipment === false ? '(GXG|International)?.*' : '') . $Package['FirstClassMailType'];
-                } elseif (strcasecmp($Package['FirstClassMailType'], 'FLAT') === 0) {
-                    $Package['lookupRegex'] = preg_replace('#Mail(?:RM|TM)?#', 'Mail.*', preg_quote($type)) . ($this->is_us_shipment === false ? '(GXG|International)?.*' : '') . 'Envelope';
-                }
-            }
-            $Package['lookupRegex'] = str_replace('Stamped Letter', 'Letter', $Package['lookupRegex']);
-            $Package['lookupRegex'] = str_replace('LetterLETTER', 'Letter', $Package['lookupRegex']);
-            $Package['lookupRegex'] = str_replace('ParcelEnvelope', 'Envelope', $Package['lookupRegex']);
-            $Package['lookupRegex'] = str_replace('EnvelopeEnvelope', 'Envelope', $Package['lookupRegex']);
-            $Package['lookupRegex'] = str_replace('ParcelPARCEL', 'Parcel', $Package['lookupRegex']);
 
             // Certain methods cannot ship if declared value is over $400, so we "continue" which skips the current $type and proceeds with the next one in the loop:
             if (isset($this->types_to_skip_over_certain_value[$type]) && $_SESSION['cart']->total > $this->types_to_skip_over_certain_value[$type]) {
@@ -837,16 +814,6 @@ class usps extends base
                     }
                 }
                 if ($found === false) {
-                    continue;
-                }
-
-                // display 1st occurance of First Class and skip others for the US
-                if (preg_match('#First\-Class.*(?!GXG|International)#i', $type)) {
-                    $cnt_first++;
-                }
-
-                // USPS customize for filtering displayed methods and costs
-                if ($this->is_us_shipment === true && MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US === 'True' && stripos($type, 'First-Class') !== false && $cnt_first > 1) {
                     continue;
                 }
 
@@ -1143,18 +1110,11 @@ class usps extends base
              VALUES
                 ('USPS minimum Height', 'MODULE_SHIPPING_USPS_HEIGHT_INTL', '1.625', 'Enter the Minimum Height - default 1.625', 6, 0, now())"
         );
-
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . "
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
              VALUES
-                ('Enable USPS First-Class filter for US shipping', 'MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US', 'True', 'Do you want to enable the US First-Class filter to display only 1 First-Class shipping rate?', 6, 0, 'zen_cfg_select_option([\'True\', \'False\'], ', now())"
-        );
-        $db->Execute(
-            "INSERT INTO " . TABLE_CONFIGURATION . "
-                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
-             VALUES
-                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, .21875, 0.00, 0, .8125, 0.00, 0, .8125, 0.00, 0, .9375, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'First-Class Mail Letter\', \'First-Class Mail Large Envelope\', \'First-Class Package Service - RetailTM\', \'First-ClassTM Package Service\', \'Media Mail Parcel\', \'USPS Retail GroundRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
+                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'Media Mail Parcel\', \'USPS Ground AdvantageTM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalTM\', \'Priority Mail Express InternationalTM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . "
@@ -1220,7 +1180,6 @@ class usps extends base
             'MODULE_SHIPPING_USPS_LENGTH_INTL',
             'MODULE_SHIPPING_USPS_WIDTH_INTL',
             'MODULE_SHIPPING_USPS_HEIGHT_INTL',
-            'MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US',
             'MODULE_SHIPPING_USPS_TYPES',
             'MODULE_SHIPPING_USPS_DMST_SERVICES',
             'MODULE_SHIPPING_USPS_INTL_SERVICES',
@@ -1241,26 +1200,6 @@ class usps extends base
         global $order, $shipping_weight;
 
         $package_id = 'USPS DOMESTIC RETURNED: ' . "\n";
-
-        // -----
-        // Force GroundOnly results in USPS Retail Ground only being offered.  See the shipping-module's
-        // language file for additional information.
-        //
-        $usps_groundonly = '';
-        if (MODULE_SHIPPING_USPS_GROUNDONLY === 'force' || (MODULE_SHIPPING_USPS_GROUNDONLY === 'true' && $_SESSION['cart']->in_cart_check('products_groundonly', '1'))) {
-            $usps_groundonly = '<Content><ContentType>HAZMAT</ContentType></Content><GroundOnly>true</GroundOnly>';
-        }
-
-        // -----
-        // Force Fragile.  If the store's indicated that some of its products are fragile, check
-        // to see if any fragile products are in the cart, setting that indication in the shipping
-        // request.  Fragile rates will be returned.  The store can also indicate that *all* products
-        // are fragile.
-        //
-        $usps_fragile = '';
-        if (MODULE_SHIPPING_USPS_FRAGILE === 'force' || (MODULE_SHIPPING_USPS_FRAGILE === 'true' && $_SESSION['cart']->in_cart_check('products_fragile', '1'))) {
-            $usps_fragile = '<Content><ContentType>Fragile</ContentType></Content>';
-        }
 
         if ((int)SHIPPING_ORIGIN_ZIP === 0) {
             // no quotes obtained no 5 digit zip code origin set
@@ -1325,37 +1264,10 @@ class usps extends base
                 }
                 $FirstClassMailType = '';
                 $Container = 'VARIABLE';
-                if (stripos($requested_type, 'First-Class') !== false) {
-                    // disable request for all First Class at 13oz. - First-Class MailRM Letter, First-Class MailRM Large Envelope, First-Class MailRM Parcel
-                    // disable request for all First Class at 13oz. - First-Class Mail Letter, First-Class Mail Large Envelope, First-Class Package Service - RetailTM
-                    // disable all first class requests if item is over 15oz.
-                    // First-Class Retail and Commercial
-                    if ($shipping_weight > 15/16) {
-                        continue;
-                    } else {
-                        // First-Class MailRM Letter\', \'First-Class MailRM Large Envelope\', \'First-Class Package Service - RetailTM
-                        $service = 'First Class';
-                        // disable request for First-Class MailRM Letter at > .21875 and not Retail
-                        if ($requested_type === 'First-Class Mail Letter' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && $shipping_weight <= .21875) {
-                            $FirstClassMailType = 'LETTER';
-                        // disable request for First-Class Mail Large Envelope at > 13oz and not Retail
-                        } elseif ($requested_type === 'First-Class Mail Large Envelope' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && $shipping_weight <= 13/16) {
-                            $FirstClassMailType = 'FLAT';
-                        // disable request for First-Class Package Service - RetailTM(new retail parcel designation) at > 13oz and not Retail
-                        } elseif ($requested_type === 'First-Class Package Service - RetailTM' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Retail' && $shipping_weight <= 13/16) {
-                            $FirstClassMailType = 'PARCEL';
-                        // disable request for First-ClassTM Package Service(existing commercial parcel designation) at > 1 lb and not Online(commercial pricing)
-                        } elseif ($requested_type === 'First-ClassTM Package Service' && MODULE_SHIPPING_USPS_RATE_TYPE === 'Online' && $shipping_weight <= 15/16) {
-                            $service = 'First Class Commercial';
-                            $FirstClassMailType = 'PACKAGE SERVICE';
-                        } else {
-                            continue;
-                        }
-                    }
-                } elseif ($requested_type === 'Media Mail Parcel') {
+                if ($requested_type === 'Media Mail Parcel') {
                     $service = 'MEDIA';
-                } elseif ($requested_type === 'USPS Retail GroundRM') {
-                    $service = 'PARCEL';
+                } elseif ($requested_type === 'USPS Ground AdvantageTM') {
+                    $service = 'GROUND ADVANTAGE';
                 } elseif (preg_match('#Priority Mail(?! Express)#i', $requested_type)) {
                     $service = 'PRIORITY COMMERCIAL';
                     if ($requested_type === 'Priority Mail Flat RateRM Envelope' || $requested_type === 'Priority MailRM Flat Rate Envelope') {
@@ -1406,7 +1318,6 @@ class usps extends base
                 $request .=
                     '<Package ID="' . $package_count . '">' .
                         '<Service>' . $service . '</Service>' .
-                        (($FirstClassMailType !== '') ? ('<FirstClassMailType>' . $FirstClassMailType . '</FirstClassMailType>') : '') .
                         '<ZipOrigination>' . SHIPPING_ORIGIN_ZIP . '</ZipOrigination>' .
                         '<ZipDestination>' . $ZipDestination . '</ZipDestination>' .
                         '<Pounds>' . $this->pounds . '</Pounds>' .
@@ -1416,8 +1327,6 @@ class usps extends base
                         $dimensions .
                         '<Value>' . number_format($this->insurable_value, 2, '.', '') . '</Value>' .
                         $specialservices .
-                        $usps_groundonly .
-                        $usps_fragile .
                         '<Machinable>' . (($this->machinable === 'True') ? 'TRUE' : 'FALSE') . '</Machinable>' .
 //'<DropOffTime>23:59</DropOffTime>' .
                         (($this->getTransitTime === true && $this->transitTimeCalculationMode === 'NEW') ? ('<ShipDate>' . $ship_date . '</ShipDate>') : '') .
@@ -1441,13 +1350,6 @@ class usps extends base
                             break;
                         case 'EXPRESS COMMERCIAL':
                             $transreq[$requested_type] = 'API=ExpressmailCommitment&XML=' . urlencode( '<ExpressMailCommitmentRequest ' . $transitreq_express . '<Date></Date></ExpressMailCommitmentRequest>');
-                            break;
-                        case 'PARCEL':
-                            $transreq[$requested_type] = 'API=StandardB&XML=' . urlencode( '<StandardBRequest ' . $transitreq . '</StandardBRequest>');
-                            break;
-                        case 'First-Class':
-                        case 'First-Class Commercial':
-                            $transreq[$requested_type] = 'API=FirstClassMail&XML=' . urlencode( '<FirstClassMailRequest ' . $transitreq . '</FirstClassMailRequest>');
                             break;
                         case 'MEDIA':
                         default:
@@ -1683,7 +1585,6 @@ class usps extends base
         $message .= 'International Length: ' . MODULE_SHIPPING_USPS_LENGTH_INTL . ' Width: ' . MODULE_SHIPPING_USPS_WIDTH_INTL . ' Height: ' . MODULE_SHIPPING_USPS_HEIGHT_INTL . "\n";
 
         $message .= 'All Packages are Machinable: ' . MODULE_SHIPPING_USPS_MACHINABLE . "\n";
-        $message .= 'Enable USPS First-Class filter for US shipping: ' . MODULE_SHIPPING_USPS_FIRST_CLASS_FILTER_US . "\n";
         $message .= 'Sorts the returned quotes: ' . MODULE_SHIPPING_USPS_QUOTE_SORT . "\n\n";
 
         $message .=
@@ -1847,9 +1748,6 @@ class usps extends base
                         $time .= ' ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
                     }
                     break;
-                case (stripos($service, 'First-Class') !== false):
-                    $time = '2 - 5 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
-                    break;
                 default:
                     $time = '';
                     break;
@@ -1886,13 +1784,9 @@ class usps extends base
                 case (stripos($service, 'Priority Mail') !== false):
                     $time = '2 - 3 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
                     break;
-                case (stripos($service, 'USPS Retail GroundRM') !== false):
+                case (stripos($service, 'USPS Ground AdvantageTM') !== false):
                     $time = '4 - 7 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
                 break;
-                case (stripos($service, 'First-Class') !== false):
-                    $time = '2 - 5 ' . MODULE_SHIPPING_USPS_TEXT_DAYS;
-                    break;
-//                case (preg_match('#Media Mail Parcel#i', $service)):
                 default:
                     $time = '';
                     break;
