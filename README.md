@@ -10,12 +10,10 @@ Zen Cart support-thread link: https://www.zen-cart.com/showthread.php?227284-USP
 
 --------------------
 
-## Current Version: 2023-02-14 K11h
+## Current Version: 2023-07-12 K11i
 
-Starting with version `2022-07-10 K11b`, the module will attempt to automatically update its settings so that you no longer need to remove and re-install the module when a _small_ update is needed.
+This version supports the newly-introduced *USPS Ground Advantage*&trade; shipping-method and removes the *USPS Retail Ground* and various *USPS First Class* domestic shipping methods.
 
-Note: There was an error in the auto-upgrade test in `2022-07-30 K11d` that prevented an auto-update from `2022-07-12 K11c`.  This has been corrected in `2022-08-07 K11e` and later.
-
-Starting with version `2021-05-05 K11a`, there is now a notification raised by the USPS shipping module to enable site-specific customizations.  A site now has additional control over whether or not a configured shipping method is enabled as well as control of the title, pricing and insurance (if enabled) cost displayed to the customer.
+**On an upgrade**, if you were an early-adopter of version `2023-07-05 K11i-beta1`, an upgrade to `2023-07-12 K11i` will be automatic.  Otherwise, you'll need to capture the current module's settings, "Remove", re-"Install" and re-apply the previous settings!
 
 Refer to the in-module comments present in `/extras/includes/classes/observers/auto.usps_overrides.php` for additional information.  To use this module, you'll make your modifications and then copy that file to your site's `/includes/classes/observers/auto.usps_overrides.php`.  The module, as shipped, implements the customization provided by @Ajeh in [this](https://www.zen-cart.com/showthread.php?212699-Media-Mail-restriction-mod-to-new-3-7-14-usps-module-any-help&p=1241681) Zen Cart posting.

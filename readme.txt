@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2023-xx-yy Version K11i
+USPS RateV4 Intl RateV2 - 2023-07-12 Version K11i
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -11,7 +11,7 @@ Registering and Creating a customer account for USPS realtime shipping quotes ..
 If you do not already have a USPS Web Tools account ...
 
 1. Register and create a USPS Web Tools account:
-https://www.usps.com/business/web-tools-apis/welcome.htm
+   https://www.usps.com/business/web-tools-apis/welcome.htm
 
 2. Fill in your customer information details and click Submit
 
@@ -26,10 +26,10 @@ https://www.usps.com/business/web-tools-apis/welcome.htm
 
 To install or update this code ...
 
-1. go to your Zen Cart Admin to the Modules ... Shipping ...
+1. Go to your Zen Cart Admin to the Modules ... Shipping ...
 
 2. If USPS exists, click on USPS and see what version is currently installed.
-   a. If you currently have either '2021-05-05 K11a' or later installed, continue the update at
+   a. If you currently have '2023-07-05 K11i-beta1' or later installed, continue the update at
       step 3.  You don't need to save your settings or remove/reinstall to get the module updated.
    b. Edit the USPS module, so that you can see your current settings.  Save those settings using a screenshot
       or copy/paste them into a text editor (like NotePad or NotePad++).
@@ -47,14 +47,14 @@ To install or update this code ...
    A. If you continued an update from step 2a above, the module has automatically updated itself and
       preserved your previous settings -- you're all finished!
    B. Otherwise, you are performing an initial installation or an update from an older version of USPS:
-      a.  Click on the USPS shipping module and then click the "Install" button.
+      a. Click on the USPS shipping module and then click the "Install" button.
       b. If you are updating from an older version, copy your previous configuration settings from
-          those you saved at step 2b.  Otherwise, for an initial installation, enter the configuration
-          settings for your freshly-installed version of USPS.
+         those you saved at step 2b.  Otherwise, for an initial installation, enter the configuration
+         settings for your freshly-installed version of USPS.
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
-2023-xx-yy by lat9 2023-xx-yy Version K11i
+2023-07-12 by lat9 2023-07-12 Version K11i
     - Add notifications to:
       - Enable the USPS shipping module to be disabled based on site-specific customizations (NOTIFY_USPS_SHIPPING_CHECK_CART).
       - Provide CUSTOM transit-time calculations (NOTIFY_SHIPPING_USPS_CUSTOM_TRANSIT_TIME).
@@ -66,6 +66,8 @@ To install or update this code ...
     - 'Clean up' various code sections.
     - Correct PHP Warnings when a country (like Aruba) has only one international service available.
     - Correct 'Priority Mail Express International' quotes not being displayed.
+    - Adds support for 'USPS Ground Advantage' shipping-method.  Also removes the 'Retail Ground' and various
+      'First Class' domestic methods and the associated "First Class Filter" setting.
 
 2023-02-14 by lat9 2023-02-14 Version K11h
     - quotes must be public, not protected. Cheapest shipping (when it's USPS) isn't highlighted.

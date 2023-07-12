@@ -1,7 +1,7 @@
 <?php
 /**
  * USPS Module for Zen Cart v1.5.6 through 1.5.8
- * USPS RateV4 Intl RateV2 - July xx, 2023 K11i
+ * USPS RateV4 Intl RateV2 - July 12, 2023 K11i
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -23,7 +23,7 @@
  * @version $Id: usps.php 2023-01-29 lat9 Version K11f $
  * @version $Id: usps.php 2023-01-30 lat9 Version K11g $
  * @version $Id: usps.php 2023-02-14 lat9 Version K11h $
- * @version $Id: usps.php 2023-xx-yy lat9 Version K11i $
+ * @version $Id: usps.php 2023-07-12 lat9 Version K11i $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -125,7 +125,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2023-07-05 K11i-beta1';
+    const USPS_CURRENT_VERSION = '2023-07-12 K11i';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -241,8 +241,9 @@ class usps extends base
                     // various 'First Class' methods and the renaming of USPS Retail Ground to
                     // USPS Ground Advantage.
                     //
-                    case '2023-07-05 K11i-beta1':     //- Fall-through from above to continue checks
-                        break;                  //- END OF AUTOMATIC UPDATE CHECKS!
+                    case '2023-07-05 K11i-beta1':
+                    case '2023-07-12 K11i':         //- Fall-through from above to continue checks
+                        break;                      //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
                         $this->title .= '<span class="alert">' . ' - Missing Keys or Out of date, you should reinstall!' . '</span>';
