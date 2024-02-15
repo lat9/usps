@@ -1,34 +1,18 @@
-USPS RateV4 Intl RateV2 - 2023-07-12 Version K11i
+USPS RateV4 Intl RateV2 - 2024-02-14 Version K11j
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
 This module requires that you have CURL installed on your server.
 
-If you do not already have a USPS Web Tools account ...
-
-Registering and Creating a customer account for USPS realtime shipping quotes ...
-
-If you do not already have a USPS Web Tools account ...
-
-1. Register and create a USPS Web Tools account:
-   https://www.usps.com/business/web-tools-apis/welcome.htm
-
-2. Fill in your customer information details and click Submit
-
-3. You will receive an email containing your USPS rate-quote Web Tools User ID
-
-4. Insert the Web Tools User ID in the Zen Cart USPS shipping module.
-
-5. Telephone USPS 1-800-344-7779 and ask them to move your account to the Production Server or email them at icustomercare@usps.com, quoting your Web Tools User ID.
-
-6. They will send another confirmation email. Set the Zen Cart module into Production mode (instead of Test mode) to finish activation.
-
+If you are performing an original install of the USPS shipping-module or if you
+have not yet configured the Web Tools PASSWORD that's now required for communication with USPS,
+refer to the shipping module's Wiki page for more information: https://github.com/lat9/usps/wiki
 
 To install or update this code ...
 
-1. Go to your Zen Cart Admin to the Modules ... Shipping ...
+1. Go to your Zen Cart Admin's Modules :: Shipping page.
 
-2. If USPS exists, click on USPS and see what version is currently installed.
+2. If USPS is already installed, click on USPS and see what version is currently installed.
    a. If you currently have '2023-07-05 K11i-beta1' or later installed, continue the update at
       step 3.  You don't need to save your settings or remove/reinstall to get the module updated.
    b. Edit the USPS module, so that you can see your current settings.  Save those settings using a screenshot
@@ -36,14 +20,19 @@ To install or update this code ...
    c. Cancel out of the USPS module's settings edit and 'REMOVE' the module to uninstall the current version
       of USPS.
 
-3. Load the new files with your FTP program they go in the same directories so you can copy the directory
-   /includes to your server and overwrite the old files:
+3. Rename the YOUR_ADMIN sub-directory in the shipping-module's distribution to match your Zen Cart admin's 'secret' name.
+
+4. Upload the files with your FTP program, the module's zip-file distribution has the same
+   directory structure as your existing site's files:
 
    - /includes/modules/shipping/usps.php
    - /includes/languages/english/modules/shipping/usps.php
    - /includes/templates/template_default/images/icons/shipping_usps.gif
+   - /YOUR_ADMIN/includes/auto_loaders/config.UspsAdminMessaging.php
+   - /YOUR_ADMIN/includes/classes/UspsAdminMessaging.php
+   - /YOUR_ADMIN/includes/languages/english/extra_definitions/usps_warning_message.php
 
-4. Go to your Zen Cart Admin and to the Modules ... Shipping ...
+5. Go to your Zen Cart Admin's Modules :: Shipping page and:
    A. If you continued an update from step 2a above, the module has automatically updated itself and
       preserved your previous settings -- you're all finished!
    B. Otherwise, you are performing an initial installation or an update from an older version of USPS:
@@ -54,6 +43,11 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2024-02-14 by lat9 2024-02-14 Version K11j
+    - Add a setting to contain the Web Tools PASSWORD field; it'll be required by USPS sometime later in
+      2024.
+    - Add an admin message to alert an admin user if the PASSWORD value isn't set.
+
 2023-07-12 by lat9 2023-07-12 Version K11i
     - Add notifications to:
       - Enable the USPS shipping module to be disabled based on site-specific customizations (NOTIFY_USPS_SHIPPING_CHECK_CART).
