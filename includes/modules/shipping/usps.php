@@ -1,7 +1,7 @@
 <?php
 /**
  * USPS Module for Zen Cart v1.5.6 through 1.5.8
- * USPS RateV4 Intl RateV2 - July 12, 2023 K11i
+ * USPS RateV4 Intl RateV2 - February 14, 2024 K11j
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -24,6 +24,7 @@
  * @version $Id: usps.php 2023-01-30 lat9 Version K11g $
  * @version $Id: usps.php 2023-02-14 lat9 Version K11h $
  * @version $Id: usps.php 2023-07-12 lat9 Version K11i $
+ * @version $Id: usps.php 2024-02-14 lat9 Version K11j $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -125,7 +126,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2023-07-12 K11i';
+    const USPS_CURRENT_VERSION = '2024-02-14 K11j';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -243,6 +244,16 @@ class usps extends base
                     //
                     case '2023-07-05 K11i-beta1':
                     case '2023-07-12 K11i':         //- Fall-through from above to continue checks
+                        // -----
+                        // '2024-02-14 K11j' adds the Web Tools Password field.
+                        //
+                        $db->Execute(
+                            "INSERT IGNORE INTO " . TABLE_CONFIGURATION . "
+                                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+                             VALUES
+                                ('Enter the USPS Web Tools Password', 'MODULE_SHIPPING_USPS_PASSWORD', '', 'Enter the USPS PASSWORD assigned to you for Rate Quotes/ShippingAPI.', 6, 0, now())"
+                        );
+                    case '2024-02-14 K11j':         //- Fall-through from above to continue checks
                         break;                      //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
@@ -1007,6 +1018,12 @@ class usps extends base
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . "
+                (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added)
+             VALUES
+                ('Enter the USPS Web Tools Password', 'MODULE_SHIPPING_USPS_PASSWORD', 'NONE', 'Enter the USPS PASSWORD assigned to you for Rate Quotes/ShippingAPI.', 6, 0, now())"
+        );
+        $db->Execute(
+            "INSERT INTO " . TABLE_CONFIGURATION . "
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
              VALUES
                 ('Which server to use', 'MODULE_SHIPPING_USPS_SERVER', 'production', 'An account at USPS is needed to use the Production server', 6, 0, 'zen_cfg_select_option([\'test\', \'production\'], ', now())"
@@ -1173,6 +1190,7 @@ class usps extends base
             'MODULE_SHIPPING_USPS_STATUS',
             'MODULE_SHIPPING_USPS_TITLE_SIZE',
             'MODULE_SHIPPING_USPS_USERID',
+            'MODULE_SHIPPING_USPS_PASSWORD',
             'MODULE_SHIPPING_USPS_SERVER',
             'MODULE_SHIPPING_USPS_QUOTE_SORT',
             'MODULE_SHIPPING_USPS_HANDLING',
@@ -1217,7 +1235,7 @@ class usps extends base
             // no quotes obtained no 5 digit zip code origin set
             return [
                 'module' => $this->title,
-                'error' => MODULE_SHIPPING_USPS_TEXT_ERROR . ((MODULE_SHIPPING_USPS_SERVER == 'test') ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
+                'error' => MODULE_SHIPPING_USPS_TEXT_ERROR . ((MODULE_SHIPPING_USPS_SERVER === 'test') ? MODULE_SHIPPING_USPS_TEXT_TEST_MODE_NOTICE : '')
             ];
         }
 
@@ -1264,8 +1282,17 @@ class usps extends base
             if ($ZipDestination === '') {
                 return -1;
             }
+
+            // -----
+            // Starting "sometime" in 2024, USPS will start requiring the password supplied
+            // in the "USPS Web Tools Registration Notice" email sent when the USPS account
+            // was registered.  For compatibility with pre-existing USPS installations, the
+            // PASSWORD= value is sent on the USPS request **only if** that value is (a) defined
+            // and (b) not an empty string.
+            //
+            $password = (defined('MODULE_SHIPPING_USPS_PASSWORD') && MODULE_SHIPPING_USPS_PASSWORD !== '') ? ' PASSWORD="' . MODULE_SHIPPING_USPS_PASSWORD . '"' : '';
             $request =
-                '<RateV4Request USERID="' . MODULE_SHIPPING_USPS_USERID . '">' .
+                '<RateV4Request USERID="' . MODULE_SHIPPING_USPS_USERID . '"' . $password . '>' .
                     '<Revision>2</Revision>';
             $package_count = 0;
             $ship_date = $this->zen_usps_shipdate();
