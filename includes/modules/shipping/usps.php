@@ -1278,7 +1278,7 @@ class usps extends base
             if (!isset($order->delivery['postcode'])) {
                 $order->delivery['postcode'] = '';
             }
-            $ZipDestination = substr(trim($order->delivery['postcode']), 0, 5);
+            $ZipDestination = $this->sanitizeXML(substr(trim($order->delivery['postcode']), 0, 5));
             if ($ZipDestination === '') {
                 return -1;
             }
@@ -1290,9 +1290,12 @@ class usps extends base
             // PASSWORD= value is sent on the USPS request **only if** that value is (a) defined
             // and (b) not an empty string.
             //
-            $password = (defined('MODULE_SHIPPING_USPS_PASSWORD') && MODULE_SHIPPING_USPS_PASSWORD !== '') ? ' PASSWORD="' . MODULE_SHIPPING_USPS_PASSWORD . '"' : '';
+            $password = (defined('MODULE_SHIPPING_USPS_PASSWORD') && MODULE_SHIPPING_USPS_PASSWORD !== '' && MODULE_SHIPPING_USPS_PASSWORD !== 'NONE') ? MODULE_SHIPPING_USPS_PASSWORD : '';
+            if ($password !== '') {
+                $password = ' PASSWORD="' . $this->sanitizeXML($password) . '"';
+            }
             $request =
-                '<RateV4Request USERID="' . MODULE_SHIPPING_USPS_USERID . '"' . $password . '>' .
+                '<RateV4Request USERID="' . $this->sanitizeXML(MODULE_SHIPPING_USPS_USERID) . '"' . $password . '>' .
                     '<Revision>2</Revision>';
             $package_count = 0;
             $ship_date = $this->zen_usps_shipdate();
@@ -1463,7 +1466,7 @@ class usps extends base
             $submission_value = ($this->insurable_value > $max_usps_allowed_price) ? $max_usps_allowed_price : $this->insurable_value;
 
             $request =
-                '<IntlRateV2Request USERID="' . MODULE_SHIPPING_USPS_USERID . '">' .
+                '<IntlRateV2Request USERID="' . $this->sanitizeXML(MODULE_SHIPPING_USPS_USERID) . '">' .
                     '<Revision>2</Revision>' .
                     '<Package ID="0">' .
                         '<Pounds>' . $this->pounds . '</Pounds>' .
@@ -1597,6 +1600,11 @@ class usps extends base
         $body_array = simplexml_load_string($body);
         $body_encoded = json_decode(json_encode($body_array), true);
         return $body_encoded;
+    }
+
+    protected function sanitizeXML($value)
+    {
+        return htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, CHARSET);
     }
 
     protected function quoteLogConfiguration()

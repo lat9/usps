@@ -43,6 +43,9 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2024-04-xx by lat9 2024-04-xx Version K11k
+    - Ensure that 'special' characters are sanitized for the XML request.
+
 2024-02-14 by lat9 2024-02-14 Version K11j
     - Add a setting to contain the Web Tools PASSWORD field; it'll be required by USPS sometime later in
       2024.
