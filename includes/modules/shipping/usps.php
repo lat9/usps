@@ -1265,6 +1265,18 @@ class usps extends base
         //
         $this->quoteLogConfiguration();
 
+        // -----
+        // Starting "sometime" in 2024, USPS will start requiring the password supplied
+        // in the "USPS Web Tools Registration Notice" email sent when the USPS account
+        // was registered.  For compatibility with pre-existing USPS installations, the
+        // PASSWORD= value is sent on the USPS request **only if** that value is (a) defined
+        // and (b) not an empty string.
+        //
+        $password = (defined('MODULE_SHIPPING_USPS_PASSWORD') && MODULE_SHIPPING_USPS_PASSWORD !== '' && MODULE_SHIPPING_USPS_PASSWORD !== 'NONE') ? MODULE_SHIPPING_USPS_PASSWORD : '';
+        if ($password !== '') {
+            $password = ' PASSWORD="' . $this->sanitizeXML($password) . '"';
+        }
+
         // US Domestic destinations
         if ($order->delivery['country']['id'] === SHIPPING_ORIGIN_COUNTRY || $this->is_us_shipment === true) {
             // build special services for domestic
@@ -1283,17 +1295,6 @@ class usps extends base
                 return -1;
             }
 
-            // -----
-            // Starting "sometime" in 2024, USPS will start requiring the password supplied
-            // in the "USPS Web Tools Registration Notice" email sent when the USPS account
-            // was registered.  For compatibility with pre-existing USPS installations, the
-            // PASSWORD= value is sent on the USPS request **only if** that value is (a) defined
-            // and (b) not an empty string.
-            //
-            $password = (defined('MODULE_SHIPPING_USPS_PASSWORD') && MODULE_SHIPPING_USPS_PASSWORD !== '' && MODULE_SHIPPING_USPS_PASSWORD !== 'NONE') ? MODULE_SHIPPING_USPS_PASSWORD : '';
-            if ($password !== '') {
-                $password = ' PASSWORD="' . $this->sanitizeXML($password) . '"';
-            }
             $request =
                 '<RateV4Request USERID="' . $this->sanitizeXML(MODULE_SHIPPING_USPS_USERID) . '"' . $password . '>' .
                     '<Revision>2</Revision>';
@@ -1466,7 +1467,7 @@ class usps extends base
             $submission_value = ($this->insurable_value > $max_usps_allowed_price) ? $max_usps_allowed_price : $this->insurable_value;
 
             $request =
-                '<IntlRateV2Request USERID="' . $this->sanitizeXML(MODULE_SHIPPING_USPS_USERID) . '">' .
+                '<IntlRateV2Request USERID="' . $this->sanitizeXML(MODULE_SHIPPING_USPS_USERID) . '"' . $password . '>' .
                     '<Revision>2</Revision>' .
                     '<Package ID="0">' .
                         '<Pounds>' . $this->pounds . '</Pounds>' .

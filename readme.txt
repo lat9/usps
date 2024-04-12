@@ -44,7 +44,8 @@ To install or update this code ...
 
 ===== CHANGE HISTORY =====
 2024-04-xx by lat9 2024-04-xx Version K11k
-    - Ensure that 'special' characters are sanitized for the XML request.
+    - Ensure that 'special' characters are sanitized for the XML requests.
+    - Add the PASSWORD field, if present, to the 'IntlRateV2Request', too.
 
 2024-02-14 by lat9 2024-02-14 Version K11j
     - Add a setting to contain the Web Tools PASSWORD field; it'll be required by USPS sometime later in
