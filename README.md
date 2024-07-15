@@ -1,6 +1,6 @@
 # USPS Shipping for Zen Cart
 
-This repository is the home of the USPS Shipping Module, supporting Zen Cart versions 1.5.6 through 1.5.8.
+This repository is the home of the USPS Shipping Module, supporting Zen Cart versions 1.5.6 through 2.0.x.
 
 USPS interface API documentation: https://www.usps.com/business/web-tools-apis/documentation-updates.htm
 
@@ -10,7 +10,7 @@ Zen Cart support-thread link: https://www.zen-cart.com/showthread.php?227284-USP
 
 --------------------
 
-## Current Version: 2023-07-12 K11i
+## Current Version: 2024-07-15 K11k
 
 This version supports the newly-introduced *USPS Ground Advantage*&trade; shipping-method and removes the *USPS Retail Ground* and various *USPS First Class* domestic shipping methods.
 
