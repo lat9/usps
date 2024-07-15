@@ -1,7 +1,7 @@
 <?php
 /**
- * USPS Module for Zen Cart v1.5.6 through 1.5.8
- * USPS RateV4 Intl RateV2 - February 14, 2024 K11j
+ * USPS Module for Zen Cart v1.5.6 through 2.0.x
+ * USPS RateV4 Intl RateV2 - July 15, 2024 K11k
 
  * Prices from: Sept 16, 2017
  * Rates Names: Sept 16, 2017
@@ -25,6 +25,7 @@
  * @version $Id: usps.php 2023-02-14 lat9 Version K11h $
  * @version $Id: usps.php 2023-07-12 lat9 Version K11i $
  * @version $Id: usps.php 2024-02-14 lat9 Version K11j $
+ * @version $Id: usps.php 2024-07-15 lat9 Version K11k $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -126,7 +127,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2024-02-14 K11j';
+    const USPS_CURRENT_VERSION = '2024-07-15 K11k';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -254,6 +255,17 @@ class usps extends base
                                 ('Enter the USPS Web Tools Password', 'MODULE_SHIPPING_USPS_PASSWORD', '', 'Enter the USPS PASSWORD assigned to you for Rate Quotes/ShippingAPI.', 6, 0, now())"
                         );
                     case '2024-02-14 K11j':         //- Fall-through from above to continue checks
+                        // -----
+                        // '2024-07-15 K11k' modifies "USPS Ground AdvantageTM" to "USPS Ground AdvantageRM".
+                        //
+                        $db->Execute(
+                            "UPDATE " . TABLE_CONFIGURATION . "
+                                SET configuration_value = REPLACE(configuration_value, 'USPS Ground AdvantageTM', 'USPS Ground AdvantageRM'),
+                                    set_function = REPLACE(set_function,  'USPS Ground AdvantageTM', 'USPS Ground AdvantageRM')
+                              WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
+                              LIMIT 1"
+                        );
+                    case '2024-07-15 K11k':         //- Fall-through from above to continue checks
                         break;                      //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:
@@ -1143,7 +1155,7 @@ class usps extends base
             "INSERT INTO " . TABLE_CONFIGURATION . "
                 (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added)
              VALUES
-                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'Media Mail Parcel\', \'USPS Ground AdvantageTM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalRM\', \'Priority Mail Express InternationalRM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
+                ('Shipping Methods (Domestic and International)',  'MODULE_SHIPPING_USPS_TYPES',  '0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, 70, 0.00, 0, .21875, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 4, 0.00, 0, 20, 0.00, 0, 20, 0.00, 0, 66, 0.00, 0, 4, 0.00, 0, 70, 0.00, 0, 70, 0.00', '<b><u>Checkbox:</u></b> Select the services to be offered<br><b><u>Minimum Weight (lbs)</u></b>first input field<br><b><u>Maximum Weight (lbs):</u></b>second input field<br><br>USPS returns methods based on cart weights.  These settings will allow further control (particularly helpful for flat rate methods) but will not override USPS limits', 6, 0, 'zen_cfg_usps_services([\'Media Mail Parcel\', \'USPS Ground AdvantageRM\', \'Priority MailRM\', \'Priority MailRM Flat Rate Envelope\', \'Priority MailRM Legal Flat Rate Envelope\', \'Priority MailRM Padded Flat Rate Envelope\', \'Priority MailRM Small Flat Rate Box\', \'Priority MailRM Medium Flat Rate Box\', \'Priority MailRM Large Flat Rate Box\', \'Priority Mail ExpressRM\', \'Priority Mail ExpressRM Flat Rate Envelope\', \'Priority Mail ExpressRM Legal Flat Rate Envelope\', \'First-Class MailRM International Letter\', \'First-Class MailRM International Large Envelope\', \'First-Class Package International ServiceTM\', \'Priority Mail InternationalRM\', \'Priority Mail InternationalRM Flat Rate Envelope\', \'Priority Mail InternationalRM Small Flat Rate Box\', \'Priority Mail InternationalRM Medium Flat Rate Box\', \'Priority Mail InternationalRM Large Flat Rate Box\', \'Priority Mail Express InternationalRM\', \'Priority Mail Express InternationalRM Flat Rate Envelope\', \'USPS GXGTM Envelopes\', \'Global Express GuaranteedRM (GXG)\'], ', now())"
         );
         $db->Execute(
             "INSERT INTO " . TABLE_CONFIGURATION . "
@@ -1308,7 +1320,7 @@ class usps extends base
                 $Container = 'VARIABLE';
                 if ($requested_type === 'Media Mail Parcel') {
                     $service = 'MEDIA';
-                } elseif ($requested_type === 'USPS Ground AdvantageTM') {
+                } elseif ($requested_type === 'USPS Ground AdvantageRM') {
                     $service = 'GROUND ADVANTAGE';
                 } elseif (preg_match('#Priority Mail(?! Express)#i', $requested_type)) {
                     $service = 'PRIORITY COMMERCIAL';
