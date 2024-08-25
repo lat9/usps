@@ -36,3 +36,5 @@ zen_define_default('MODULE_SHIPPING_USPS_REGULATIONS', 'False');      //-Either 
 // Out-of-range values will be reset to '1400' (the default).
 //
 zen_define_default('MODULE_SHIPPING_USPS_SHIPPING_CUTOFF', '1400');
+
+return $define;
