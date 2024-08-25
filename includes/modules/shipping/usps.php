@@ -26,6 +26,7 @@
  * @version $Id: usps.php 2023-07-12 lat9 Version K11i $
  * @version $Id: usps.php 2024-02-14 lat9 Version K11j $
  * @version $Id: usps.php 2024-07-15 lat9 Version K11k $
+ * @version $Id: usps.php 2024-08-25 lat9 Version K11l $
  */
 if (!defined('IS_ADMIN_FLAG')) {
     exit('Illegal Access');
@@ -127,7 +128,7 @@ class usps extends base
     // -----
     // Class constant to define the current module version.
     //
-    const USPS_CURRENT_VERSION = '2024-07-15 K11k';
+    const USPS_CURRENT_VERSION = '2024-08-25 K11l';
 
     // -----
     // Class constant to define the shipping-method's Zen Cart plugin ID.
@@ -265,7 +266,9 @@ class usps extends base
                               WHERE configuration_key = 'MODULE_SHIPPING_USPS_TYPES'
                               LIMIT 1"
                         );
-                    case '2024-07-15 K11k':         //- Fall-through from above to continue checks
+
+                    case '2024-07-15 K11k':
+                    case '2024-08-26 K11l':         //- Fall-through from above to continue checks
                         break;                      //- END OF AUTOMATIC UPDATE CHECKS!
 
                     default:

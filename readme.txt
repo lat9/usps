@@ -1,4 +1,4 @@
-USPS RateV4 Intl RateV2 - 2024-07-15 Version K11k
+USPS RateV4 Intl RateV2 - 2024-08-25 Version K11l
 
 Note: This shipping-module now has a GitHub repository:  https://github.com/lat9/usps.  Additional documentation is available online.
 
@@ -26,6 +26,7 @@ To install or update this code ...
    directory structure as your existing site's files:
 
    - /includes/modules/shipping/usps.php
+   - /includes/languages/english/modules/shipping/lang.usps.php (added in K11l)
    - /includes/languages/english/modules/shipping/usps.php
    - /includes/templates/template_default/images/icons/shipping_usps.gif
    - /YOUR_ADMIN/includes/auto_loaders/config.UspsAdminMessaging.php
@@ -43,6 +44,9 @@ To install or update this code ...
       c. Click the "Update" button to save your changes.
 
 ===== CHANGE HISTORY =====
+2024-08-25 by lat9 2024-08-25 Version K11l
+    - Include zc158+ lang.usps.php; required for zc210.
+
 2024-07-15 by lat9 2024-07-15 Version K11k
     - Ensure that 'special' characters are sanitized for the XML requests.
     - Add the PASSWORD field, if present, to the 'IntlRateV2Request', too.
